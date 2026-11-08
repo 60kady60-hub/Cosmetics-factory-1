@@ -121,7 +121,7 @@ function expiryStatus(item){
  let near=false;
  for(const batch of (item.batches||[])){
   const expiry=String(batch.expiry||"").trim();
-  if(!(Number(batch.qty)>0)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(expiry))continue;
+  if(!(Number(batch.qty)>0)||!/^\d{4}-\d{2}-\d{2}$/.test(expiry))continue;
   if(expiry<today)return "stock-expired";
   if(expiry<=monthLimit)near=true;
  }
