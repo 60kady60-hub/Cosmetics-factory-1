@@ -162,17 +162,29 @@ $("search").oninput=render;
 function similarNames(name,except){let n=name.trim().toLowerCase();return data.filter(x=>x.warehouse===current&&x.id!==except&&(x.name.toLowerCase()===n||x.name.toLowerCase().includes(n)||n.includes(x.name.toLowerCase())||lev(n,x.name.toLowerCase())<=2)).slice(0,5)}
 function lev(a,b){let d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
 $("name").addEventListener("input",()=>{let m=similarNames($("name").value,editId);$("similar").hidden=!m.length;$("similar").textContent=m.length?"تنبيه: توجد أسماء مطابقة أو متشابهة: "+m.map(x=>x.name).join("، ")+". راجعها قبل الحفظ؛ يمكنك الاستمرار إذا كان الصنف مختلفاً.":""});
-["name","quantity","price","supplier","expiry"].forEach(id=>$(id).addEventListener("input",()=>{
-  // امسح أي خطأ قديم بمجرد تعديل البيانات حتى لا يظل المتصفح رافضاً للنموذج.
-  $("expiry").setCustomValidity("");
-  $("expiryError").hidden=true;
-  $("expiryError").textContent="";
+function localTodayISO(){
+ const d=new Date();
+ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function validateExpiry(showMessage=true){
+ const field=$("expiry"),value=field.value,today=localTodayISO();
+ field.min=today;
+ if(value && value<today){
+  const msg="مرفوض: الصنف ده منتهي الصلاحية. اختار تاريخ اليوم أو تاريخًا قادمًا.";
+  field.setCustomValidity(msg);
+  if(showMessage){$("expiryError").textContent=msg;$("expiryError").hidden=false;}
+  return false;
+ }
+ field.setCustomValidity("");
+ $("expiryError").hidden=true;$("expiryError").textContent="";
+ return true;
+}
+$("expiry").min=localTodayISO();
+["name","quantity","price","supplier"].forEach(id=>$(id).addEventListener("input",()=>{
+ $("expiryError").hidden=true;$("expiryError").textContent="";
 }));
-$("expiry").addEventListener("change",()=>{
-  $("expiry").setCustomValidity("");
-  $("expiryError").hidden=true;
-  $("expiryError").textContent="";
-});
+$("expiry").addEventListener("input",()=>validateExpiry(true));
+$("expiry").addEventListener("change",()=>validateExpiry(true));
 $("itemForm").onsubmit=e=>{e.preventDefault();let name=$("name").value.trim();
  const requiredChecks=[
    ["name",name,"من فضلك اكتب اسم الصنف."],
@@ -185,17 +197,10 @@ $("itemForm").onsubmit=e=>{e.preventDefault();let name=$("name").value.trim();
    const missing=requiredChecks.find(x=>!x[1]);
    if(missing){const box=$("expiryError");box.textContent=missing[2];box.hidden=false;$(missing[0]).focus();return;}
  }
- const expiryValue=$("expiry").value;
- const now=new Date();
- const today=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
- if(expiryValue && expiryValue < today){
-   const msg="مرفوض: الصنف ده منتهي الصلاحية. تاريخ الصلاحية أقدم من تاريخ اليوم، ولم يتم حفظ الصنف.";
-   $("expiryError").textContent=msg; $("expiryError").hidden=false;
-   $("expiry").setCustomValidity(msg);
+ if(!validateExpiry(true)){
    $("expiry").reportValidity();
    return;
  }
- $("expiry").setCustomValidity(""); $("expiryError").hidden=true; $("expiryError").textContent="";
  let qty=Number($("quantity").value),price=Number($("price").value);let batch={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:new Date().toISOString().slice(0,10),qty,price,supplier:$("supplier").value.trim(),expiry:$("expiry").value,notes:$("notes").value.trim(),type:addingMode==="batch"?"إضافة كمية":"رصيد افتتاحي"};
  if(editId){let x=data.find(x=>x.id===editId);x.name=name;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(addingMode==="batch")x.batches.push(batch);else if(x.batches.length===0&&qty>0)x.batches.push(batch);}
  else {let same=data.find(x=>x.warehouse===current&&x.name.toLowerCase()===name.toLowerCase());if(same){alert("هذا الصنف مسجل بالفعل. استخدم زر «＋ كمية» لإضافة دفعة جديدة.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),batches:qty>0?[batch]:[]});}
