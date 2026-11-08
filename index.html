@@ -124,7 +124,8 @@ $('confirmDelete').onclick=()=>{if(pendingDeleteId===null||pendingDeleteId===und
 // Long press: iOS Safari reliably emits touch events; pointer events remain for mouse/pen.
 let touchStartX=0,touchStartY=0,touchLongPressFired=false;
 $('rows').addEventListener('touchstart',e=>{
- const b=e.target.closest('.item-name[data-item-id]');if(!b)return;
+ const row=e.target.closest('tr');if(!row||e.target.closest('.actions button'))return;
+ const b=row.querySelector('.item-name[data-item-id]');if(!b)return;
  clearTimeout(longPressTimer);touchLongPressFired=false;
  const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;
  const id=b.dataset.itemId;
@@ -136,13 +137,14 @@ $('rows').addEventListener('touchmove',e=>{
 },{passive:true});
 ['touchend','touchcancel'].forEach(ev=>$('rows').addEventListener(ev,()=>{clearTimeout(longPressTimer);longPressTimer=null;}));
 $('rows').addEventListener('pointerdown',e=>{
- if(e.pointerType==='touch')return;
- const b=e.target.closest('.item-name[data-item-id]');if(!b)return;
+ if(e.pointerType==='touch'||e.target.closest('.actions button'))return;
+ const row=e.target.closest('tr');if(!row)return;
+ const b=row.querySelector('.item-name[data-item-id]');if(!b)return;
  clearTimeout(longPressTimer);const id=b.dataset.itemId;
  longPressTimer=setTimeout(()=>openDeleteOptions(id),650);
 });
 ['pointerup','pointerleave','pointercancel'].forEach(ev=>$('rows').addEventListener(ev,()=>{clearTimeout(longPressTimer);longPressTimer=null;}));
-$('rows').addEventListener('contextmenu',e=>{const b=e.target.closest('.item-name[data-item-id]');if(!b)return;e.preventDefault();clearTimeout(longPressTimer);openDeleteOptions(b.dataset.itemId);});
+$('rows').addEventListener('contextmenu',e=>{if(e.target.closest('.actions button'))return;const row=e.target.closest('tr');if(!row)return;const b=row.querySelector('.item-name[data-item-id]');if(!b)return;e.preventDefault();clearTimeout(longPressTimer);openDeleteOptions(b.dataset.itemId);});
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showModal(){ $("modal").classList.add("show"); }
 function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("name").disabled=false; $("unit").disabled=false; $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
