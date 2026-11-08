@@ -117,8 +117,8 @@ function expiryStatus(item){
  const monthLimit=monthDate.getFullYear()+"-"+String(monthDate.getMonth()+1).padStart(2,"0")+"-"+String(monthDate.getDate()).padStart(2,"0");
  let near=false;
  for(const batch of (item.batches||[])){
-  if(!(Number(batch.qty)>0)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(batch.expiry||""))continue;
-  if(batch.expiry<=today)return "stock-expired";
+  if(!(Number(batch.qty)>0)||!/^\d{4}-\d{2}-\d{2}$/.test(batch.expiry||""))continue;
+  if(batch.expiry<today)return "stock-expired";
   if(batch.expiry<=monthLimit)near=true;
  }
  return near?"stock-near-expiry":"";
