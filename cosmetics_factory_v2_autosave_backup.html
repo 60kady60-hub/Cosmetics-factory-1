@@ -116,7 +116,7 @@ let pendingDeleteId=null, longPressTimer=null, longPressTriggered=false;
 function openDeleteOptions(id){const x=data.find(z=>z.id===id);if(!x)return;pendingDeleteId=id;$('deleteTitle').textContent='حذف الصنف: '+x.name;$('deleteModal').classList.add('show');}
 function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;}
 $('cancelDelete').onclick=closeDeleteOptions;
-$('confirmDelete').onclick=()=>{if(pendingDeleteId===null||pendingDeleteId===undefined)return;const id=String(pendingDeleteId);const index=data.findIndex(z=>String(z.id)===id);if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب حذفه. حدّث الصفحة وحاول مرة أخرى.');return;}data.splice(index,1);save();closeDeleteOptions();render();};
+$('confirmDelete').onclick=()=>{if(pendingDeleteId===null||pendingDeleteId===undefined)return;const id=String(pendingDeleteId);const index=data.findIndex(z=>String(z.id)===id);if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب حذفه. حدّث الصفحة وحاول مرة أخرى.');return;}const dataName=data[index].name;data.splice(index,1);const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}};
 // Long press: iOS Safari reliably emits touch events; pointer events remain for mouse/pen.
 let touchStartX=0,touchStartY=0,touchLongPressFired=false;
 $('rows').addEventListener('touchstart',e=>{
