@@ -234,7 +234,7 @@ $("expiry").min=localTodayISO();
 }));
 $("expiry").addEventListener("input",()=>validateExpiry(true));
 $("expiry").addEventListener("change",()=>validateExpiry(true));
-$("itemForm").onsubmit=e=>{e.preventDefault();let name=$("name").value.trim();
+$("itemForm").onsubmit=e=>{e.preventDefault();
  const nameEn=$("nameEn").value.trim(),nameAr=$("nameAr").value.trim();
  const requiredChecks=[
    ["nameEn",nameEn,"من فضلك اكتب اسم الصنف بالإنجليزي."],
