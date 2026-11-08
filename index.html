@@ -38,6 +38,7 @@ table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 10p
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}.field.full{grid-column:1/-1}.formactions{display:flex;gap:8px;margin-top:16px}
 .badge{font-size:11px;background:#edf4f0;color:#28574b;padding:4px 7px;border-radius:20px}
 .item-name{border:0;background:transparent;color:var(--green);font:inherit;font-weight:700;padding:8px 5px;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.item-name:focus{outline:2px solid var(--gold);border-radius:6px}
+.batch-details td{background:#f8fbf9;padding:12px}.batch-details-inner{display:grid;gap:12px}.batch-details-inner>.tablewrap{border-radius:10px}.batch-details-inner table{min-width:650px}.batch-details-inner th,.batch-details-inner td{white-space:nowrap}
 small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-size:12px;padding:22px}body{padding-bottom:54px}.save-status{position:fixed;z-index:20;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));font-size:12px;text-align:center;color:var(--green);box-shadow:0 -2px 8px #0000000a}.save-status.error{color:#a32121;background:#fff5f5}.backup-panel{display:grid;gap:14px}.backup-actions{display:flex;gap:10px;flex-wrap:wrap}.backup-help{font-size:13px;line-height:1.8;color:var(--muted)}
 @media(max-width:600px){.summary{grid-template-columns:1fr 1fr}.summary .metric:last-child{grid-column:1/-1}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}main{padding:12px}.toolbar{align-items:stretch}.search{max-width:none}}
 </style>
@@ -109,11 +110,17 @@ function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));const
 const money=n=>(Number(n)||0).toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2});
 function items(){return data.filter(x=>x.warehouse===current)}
 function weighted(x){let q=x.batches.reduce((s,b)=>s+Number(b.qty),0),v=x.batches.reduce((s,b)=>s+Number(b.qty)*Number(b.price),0);return q? v/q:0}
+let expandedItemId=null;
+window.toggleItemDetails=id=>{expandedItemId=String(expandedItemId)===String(id)?null:id;render();};
 function render(){
  const list=items(), term=$("search").value.trim().toLowerCase();
  const filtered=list.filter(x=>(x.name+" "+(x.supplier||"")).toLowerCase().includes(term));
- $("rows").innerHTML=filtered.length?filtered.map(x=>{let q=x.batches.reduce((s,b)=>s+Number(b.qty),0), ex=x.batches.map(b=>b.expiry).filter(Boolean).sort()[0]||"—";
- return `<tr><td><button class="item-name" type="button" data-item-id="${x.id}" title="اضغط مطولاً لإظهار خيارات الحذف">${esc(x.name)}</button></td><td>${esc(x.unit)}</td><td>${q.toLocaleString("en-US",{maximumFractionDigits:3})}</td><td>${money(weighted(x))} ج.م</td><td>${esc(x.supplier||"—")}</td><td>${ex}</td><td><div class="actions"><button class="secondary" onclick="addBatch('${x.id}')">＋ كمية</button><button class="secondary" onclick="historyItem('${x.id}')">الحركة</button></div></td></tr>`}).join(""):`<tr><td colspan="7" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>`;
+ $("rows").innerHTML=filtered.length?filtered.map(x=>{
+  let q=x.batches.reduce((s,b)=>s+Number(b.qty),0), ex=x.batches.map(b=>b.expiry).filter(Boolean).sort()[0]||"—";
+  const expanded=String(expandedItemId)===String(x.id);
+  const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(b.type||"دفعة")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مسجلة لهذا الصنف حتى الآن.</td></tr>';
+  return '<tr><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض الكميات المسجلة، واضغط مطولاً للحذف">'+esc(x.name)+' '+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td>'+esc(x.supplier||"—")+'</td><td>'+ex+'</td><td><div class="actions"><button class="secondary" onclick="addBatch(\''+x.id+'\')">＋ كمية</button><button class="secondary" onclick="historyItem(\''+x.id+'\')">الحركة</button></div></td></tr>'+(expanded?'<tr class="batch-details"><td colspan="7"><div class="batch-details-inner"><strong>الكميات المسجلة في '+esc(x.name)+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>التاريخ</th><th>المورد</th><th>الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة للصنف</button></div></td></tr>':'');
+ }).join(""):'<tr><td colspan="7" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
  $("count").textContent=list.length.toLocaleString("en-US");
  $("qty").textContent=list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty),0),0).toLocaleString("en-US",{maximumFractionDigits:2});
  $("value").textContent=money(list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty)*Number(b.price),0),0))+" ج.م";
