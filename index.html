@@ -113,13 +113,17 @@ function weighted(x){let q=x.batches.reduce((s,b)=>s+Number(b.qty),0),v=x.batche
 let expandedItemId=null;
 function expiryStatus(item){
  const today=localTodayISO();
- const monthDate=new Date();monthDate.setHours(12,0,0,0);monthDate.setMonth(monthDate.getMonth()+1);
- const monthLimit=monthDate.getFullYear()+"-"+String(monthDate.getMonth()+1).padStart(2,"0")+"-"+String(monthDate.getDate()).padStart(2,"0");
+ const [year,month,day]=today.split("-").map(Number);
+ const nextMonthYear=month===12?year+1:year;
+ const nextMonth=month===12?1:month+1;
+ const lastDayNextMonth=new Date(Date.UTC(nextMonthYear,nextMonth,0)).getUTCDate();
+ const monthLimit=nextMonthYear+"-"+String(nextMonth).padStart(2,"0")+"-"+String(Math.min(day,lastDayNextMonth)).padStart(2,"0");
  let near=false;
  for(const batch of (item.batches||[])){
-  if(!(Number(batch.qty)>0)||!/^\d{4}-\d{2}-\d{2}$/.test(batch.expiry||""))continue;
-  if(batch.expiry<today)return "stock-expired";
-  if(batch.expiry<=monthLimit)near=true;
+  const expiry=String(batch.expiry||"").trim();
+  if(!(Number(batch.qty)>0)||!/^\\d{4}-\\d{2}-\\d{2}$/.test(expiry))continue;
+  if(expiry<today)return "stock-expired";
+  if(expiry<=monthLimit)near=true;
  }
  return near?"stock-near-expiry":"";
 }
