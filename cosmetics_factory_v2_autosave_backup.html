@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173b35">
+<title>نظام إدارة مصنع الكوزماتكس</title>
+<style>
+:root{--green:#173b35;--green2:#24594f;--bg:#f3f6f4;--card:#fff;--line:#dfe7e2;--text:#1d2925;--muted:#687770;--gold:#d8ad5c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif}
+header{background:var(--green);color:white;padding:22px 16px 18px}header h1{font-size:21px;margin:0 0 6px}header p{margin:0;color:#d6e5df;font-size:13px}
+nav,.subnav{display:flex;gap:8px;overflow-x:auto;padding:12px;background:white;border-bottom:1px solid var(--line);scrollbar-width:thin}
+.tab{border:1px solid var(--line);background:#f8faf9;color:var(--green);padding:11px 15px;border-radius:12px;white-space:nowrap;font-weight:700;cursor:pointer}
+.tab.active{background:var(--green);color:white;border-color:var(--green)}
+.tab[draggable=true]{cursor:grab}
+main{max-width:1100px;margin:auto;padding:16px}
+.notice{background:#fff8e8;border:1px solid #f0dfb7;color:#71531d;border-radius:12px;padding:11px 13px;font-size:13px;margin-bottom:14px}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.metric,.panel{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px}
+.metric small{color:var(--muted);display:block;margin-bottom:7px}.metric strong{font-size:20px;color:var(--green)}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:14px 0}
+button.primary{background:var(--green);color:#fff;border:0;border-radius:11px;padding:12px 16px;font-weight:700;cursor:pointer}
+button.secondary{background:white;color:var(--green);border:1px solid var(--line);border-radius:11px;padding:11px 14px;cursor:pointer}
+input,select,textarea{font:inherit;border:1px solid #cfdad3;border-radius:10px;padding:11px;background:white;width:100%;min-width:0}
+.search{max-width:310px}
+.tablewrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:13px}
+table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 10px;text-align:right;border-bottom:1px solid var(--line);font-size:13px}th{background:#f7faf8;color:var(--muted);font-weight:700}tr:last-child td{border-bottom:0}
+.empty{text-align:center;color:var(--muted);padding:28px}
+.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{font-size:12px;padding:7px 9px}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:5;padding:14px;overflow:auto}.modal.show{display:flex;align-items:flex-start;justify-content:center}
+.dialog{background:white;border-radius:17px;padding:18px;width:min(620px,100%);margin:auto}.dialog h2{margin:0 0 14px;font-size:19px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}.field.full{grid-column:1/-1}.formactions{display:flex;gap:8px;margin-top:16px}
+.badge{font-size:11px;background:#edf4f0;color:#28574b;padding:4px 7px;border-radius:20px}
+.item-name{border:0;background:transparent;color:var(--green);font:inherit;font-weight:700;padding:8px 5px;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.item-name:focus{outline:2px solid var(--gold);border-radius:6px}
+small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-size:12px;padding:22px}body{padding-bottom:54px}.save-status{position:fixed;z-index:20;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));font-size:12px;text-align:center;color:var(--green);box-shadow:0 -2px 8px #0000000a}.save-status.error{color:#a32121;background:#fff5f5}.backup-panel{display:grid;gap:14px}.backup-actions{display:flex;gap:10px;flex-wrap:wrap}.backup-help{font-size:13px;line-height:1.8;color:var(--muted)}
+@media(max-width:600px){.summary{grid-template-columns:1fr 1fr}.summary .metric:last-child{grid-column:1/-1}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}main{padding:12px}.toolbar{align-items:stretch}.search{max-width:none}}
+</style>
+</head>
+<body>
+<header><h1>نظام إدارة مصنع الكوزماتكس</h1><p>نسخة أولية لإدارة المخازن — تعمل محلياً على هذا الجهاز</p></header>
+<nav id="mainNav" aria-label="القائمة الرئيسية">
+ <button class="tab active" data-main="warehouses" draggable="true">📦 المخازن</button>
+ <button class="tab" data-main="production" draggable="true">🧪 التصنيع</button>
+ <button class="tab" data-main="purchases" draggable="true">🛒 المشتريات</button>
+ <button class="tab" data-main="sales" draggable="true">💰 المبيعات</button>
+ <button class="tab" data-main="reports" draggable="true">📊 التقارير</button>
+ <button class="tab" data-main="backup" draggable="true">🗂️ نسخ احتياطي</button>
+</nav>
+<main>
+<div id="app">
+ <div class="notice">ابدأ بإدخال الرصيد الافتتاحي لكل صنف مرة واحدة. بعد ذلك سجّل أي زيادة من خلال «إضافة كمية» حتى يحتفظ البرنامج بتاريخ كل دفعة وسعرها وموردها وصلاحيتها.</div>
+ <div class="summary">
+  <div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div>
+  <div class="metric"><small>إجمالي الكميات (كل صنف بوحدته)</small><strong id="qty">0</strong></div>
+  <div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div>
+ </div>
+ <div class="subnav" id="warehouseNav">
+  <button class="tab active" data-warehouse="raw">🧪 المواد الخام</button>
+  <button class="tab" data-warehouse="pack">📦 التعبئة والتغليف</button>
+  <button class="tab" data-warehouse="equipment">🛠️ المعدات</button>
+  <button class="tab" data-warehouse="finished">🧴 المنتجات النهائية</button>
+ </div>
+ <div class="toolbar"><button class="primary" id="addItem">＋ إضافة صنف جديد</button><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
+ <div class="tablewrap"><table><thead><tr><th>اسم الصنف</th><th>الوحدة</th><th>الرصيد الحالي</th><th>متوسط سعر الوحدة</th><th>المورد</th><th>أقرب صلاحية</th><th>إجراءات</th></tr></thead><tbody id="rows"></tbody></table></div>
+ <p class="muted" style="font-size:12px;margin-top:10px">ملاحظة: قيمة المخزون ومتوسط السعر تقديريان على أساس متوسط تكلفة الشراء المرجح. المعدات تُسجّل كأصول/عدد ولا تدخل تلقائياً في تكلفة الخامات.</p>
+</div>
+<section id="placeholder" class="panel" hidden><h2 id="placeholderTitle"></h2><p>هذا القسم ظاهر في التصميم، وسيتم تفعيله في مرحلة لاحقة وربطه بحركات المخزون.</p></section>
+<section id="backupSection" class="panel backup-panel" hidden>
+ <div><h2 style="margin:0 0 8px">النسخ الاحتياطي واستعادة البيانات</h2><p class="backup-help">احتفظ بملف النسخة الاحتياطية على هاتفك أو في مكان آمن. يمكنك استخدامه لاسترجاع بيانات المخزن عند تغيير ملف البرنامج أو الجهاز.</p></div>
+ <div class="backup-actions"><button class="primary" id="backup">⬇️ تنزيل بيانات التطبيق JSON</button><button class="secondary" id="restoreBtn">⬆️ استيراد بيانات JSON</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
+ <div class="notice" style="margin:0">تنبيه: الاستيراد يستبدل بيانات المخزن الحالية بالبيانات الموجودة في الملف بعد موافقتك. صدّر نسخة احتياطية أولاً قبل الاستيراد.</div>
+ <p class="backup-help">الحفظ التلقائي يعمل داخل المتصفح على نفس الجهاز. لو فتحت نسخة البرنامج من مسار أو متصفح مختلف، استورد ملف JSON لاسترجاع بياناتك.</p>
+</section>
+</main>
+<footer>البيانات تُحفظ تلقائيًا في ذاكرة المتصفح على هذا الجهاز. احتفظ بنسخة JSON احتياطية بشكل دوري.</footer>
+<div id="saveStatus" class="save-status" role="status" aria-live="polite">جارٍ فحص بيانات الحفظ...</div>
+<div class="modal" id="deleteModal"><div class="dialog" style="max-width:360px"><h2 id="deleteTitle">إدارة الصنف</h2><p style="color:var(--muted);font-size:14px">هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟</p><div class="formactions"><button class="primary" type="button" id="confirmDelete" style="background:#a83232">حذف الصنف</button><button class="secondary" type="button" id="cancelDelete">تراجع</button></div></div></div>
+<div class="modal" id="modal"><div class="dialog">
+<h2 id="modalTitle">إضافة صنف</h2>
+<form id="itemForm" novalidate>
+<div class="formgrid">
+ <div class="field"><label>اسم الصنف *</label><input id="name" required maxlength="90" placeholder="مثال: جلسرين"></div>
+ <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
+ <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
+ <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0" step="0.01" required value=""></div>
+ <div class="field"><label>الشركة / المورد *</label><input id="supplier" required placeholder="اسم المورد"></div>
+ <div class="field"><label>تاريخ الصلاحية *</label><input id="expiry" type="date" required></div>
+ <div class="field full"><label>ملاحظات</label><textarea id="notes" rows="2" placeholder="اختياري"></textarea></div>
+</div>
+<div id="similar" class="notice" hidden></div>
+<div id="expiryError" role="alert" aria-live="assertive" hidden style="margin:12px 0;padding:12px;border:1px solid #c62828;border-radius:10px;background:#fff0f0;color:#9b1c1c;font-weight:700"></div>
+<div class="formactions"><button class="primary" type="submit">حفظ الصنف</button><button class="secondary" type="button" id="cancel">إلغاء</button></div>
+</form></div></div>
+<script>
+const labels={raw:"المواد الخام",pack:"التعبئة والتغليف",equipment:"المعدات",finished:"المنتجات النهائية"};
+const $=id=>document.getElementById(id);
+const STORAGE_KEY="cosmetics_stock_v1";
+let data=[];
+try{const stored=localStorage.getItem(STORAGE_KEY);data=stored?JSON.parse(stored):[];if(!Array.isArray(data))data=[];}catch(err){data=[];}
+let current="raw", editId=null, addingMode="new";
+function setSaveStatus(message,isError=false){const el=$("saveStatus");if(!el)return;el.textContent=message;el.classList.toggle("error",!!isError);}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));const now=new Date();setSaveStatus("✓ تم الحفظ تلقائيًا — آخر حفظ: "+now.toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));return true;}catch(err){setSaveStatus("⚠️ تعذّر الحفظ على الهاتف. صدّر نسخة JSON فورًا.",true);return false;}}
+const money=n=>(Number(n)||0).toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2});
+function items(){return data.filter(x=>x.warehouse===current)}
+function weighted(x){let q=x.batches.reduce((s,b)=>s+Number(b.qty),0),v=x.batches.reduce((s,b)=>s+Number(b.qty)*Number(b.price),0);return q? v/q:0}
+function render(){
+ const list=items(), term=$("search").value.trim().toLowerCase();
+ const filtered=list.filter(x=>(x.name+" "+(x.supplier||"")).toLowerCase().includes(term));
+ $("rows").innerHTML=filtered.length?filtered.map(x=>{let q=x.batches.reduce((s,b)=>s+Number(b.qty),0), ex=x.batches.map(b=>b.expiry).filter(Boolean).sort()[0]||"—";
+ return `<tr><td><button class="item-name" type="button" data-item-id="${x.id}" title="اضغط مطولاً لإظهار خيارات الحذف">${esc(x.name)}</button></td><td>${esc(x.unit)}</td><td>${q.toLocaleString("en-US",{maximumFractionDigits:3})}</td><td>${money(weighted(x))} ج.م</td><td>${esc(x.supplier||"—")}</td><td>${ex}</td><td><div class="actions"><button class="secondary" onclick="addBatch('${x.id}')">＋ كمية</button><button class="secondary" onclick="historyItem('${x.id}')">الحركة</button><button class="secondary" onclick="editItem('${x.id}')">تعديل</button></div></td></tr>`}).join(""):`<tr><td colspan="7" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>`;
+ $("count").textContent=list.length.toLocaleString("en-US");
+ $("qty").textContent=list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty),0),0).toLocaleString("en-US",{maximumFractionDigits:2});
+ $("value").textContent=money(list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty)*Number(b.price),0),0))+" ج.م";
+}
+let pendingDeleteId=null, longPressTimer=null, longPressTriggered=false;
+function openDeleteOptions(id){const x=data.find(z=>z.id===id);if(!x)return;pendingDeleteId=id;$('deleteTitle').textContent='حذف الصنف: '+x.name;$('deleteModal').classList.add('show');}
+function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;}
+$('cancelDelete').onclick=closeDeleteOptions;
+$('confirmDelete').onclick=()=>{if(pendingDeleteId===null||pendingDeleteId===undefined)return;const id=String(pendingDeleteId);const index=data.findIndex(z=>String(z.id)===id);if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب حذفه. حدّث الصفحة وحاول مرة أخرى.');return;}data.splice(index,1);save();closeDeleteOptions();render();};
+// Long press: iOS Safari reliably emits touch events; pointer events remain for mouse/pen.
+let touchStartX=0,touchStartY=0,touchLongPressFired=false;
+$('rows').addEventListener('touchstart',e=>{
+ const b=e.target.closest('.item-name[data-item-id]');if(!b)return;
+ clearTimeout(longPressTimer);touchLongPressFired=false;
+ const t=e.touches[0];touchStartX=t.clientX;touchStartY=t.clientY;
+ const id=b.dataset.itemId;
+ longPressTimer=setTimeout(()=>{touchLongPressFired=true;openDeleteOptions(id);},750);
+},{passive:true});
+$('rows').addEventListener('touchmove',e=>{
+ if(!longPressTimer)return;const t=e.touches[0];
+ if(Math.abs(t.clientX-touchStartX)>12||Math.abs(t.clientY-touchStartY)>12){clearTimeout(longPressTimer);longPressTimer=null;}
+},{passive:true});
+['touchend','touchcancel'].forEach(ev=>$('rows').addEventListener(ev,()=>{clearTimeout(longPressTimer);longPressTimer=null;}));
+$('rows').addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch')return;
+ const b=e.target.closest('.item-name[data-item-id]');if(!b)return;
+ clearTimeout(longPressTimer);const id=b.dataset.itemId;
+ longPressTimer=setTimeout(()=>openDeleteOptions(id),650);
+});
+['pointerup','pointerleave','pointercancel'].forEach(ev=>$('rows').addEventListener(ev,()=>{clearTimeout(longPressTimer);longPressTimer=null;}));
+$('rows').addEventListener('contextmenu',e=>{const b=e.target.closest('.item-name[data-item-id]');if(!b)return;e.preventDefault();clearTimeout(longPressTimer);openDeleteOptions(b.dataset.itemId);});
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function showModal(){ $("modal").classList.add("show"); }
+function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("name").disabled=false; $("unit").disabled=false; $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
+$("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";showModal()};
+$("cancel").onclick=closeModal;
+$("search").oninput=render;
+function similarNames(name,except){let n=name.trim().toLowerCase();return data.filter(x=>x.warehouse===current&&x.id!==except&&(x.name.toLowerCase()===n||x.name.toLowerCase().includes(n)||n.includes(x.name.toLowerCase())||lev(n,x.name.toLowerCase())<=2)).slice(0,5)}
+function lev(a,b){let d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
+$("name").addEventListener("input",()=>{let m=similarNames($("name").value,editId);$("similar").hidden=!m.length;$("similar").textContent=m.length?"تنبيه: توجد أسماء مطابقة أو متشابهة: "+m.map(x=>x.name).join("، ")+". راجعها قبل الحفظ؛ يمكنك الاستمرار إذا كان الصنف مختلفاً.":""});
+["name","quantity","price","supplier","expiry"].forEach(id=>$(id).addEventListener("input",()=>{
+  // امسح أي خطأ قديم بمجرد تعديل البيانات حتى لا يظل المتصفح رافضاً للنموذج.
+  $("expiry").setCustomValidity("");
+  $("expiryError").hidden=true;
+  $("expiryError").textContent="";
+}));
+$("expiry").addEventListener("change",()=>{
+  $("expiry").setCustomValidity("");
+  $("expiryError").hidden=true;
+  $("expiryError").textContent="";
+});
+$("itemForm").onsubmit=e=>{e.preventDefault();let name=$("name").value.trim();
+ const requiredChecks=[
+   ["name",name,"من فضلك اكتب اسم الصنف."],
+   ["quantity",$("quantity").value && Number($("quantity").value)>0,"من فضلك أدخل كمية صحيحة أكبر من صفر."],
+   ["price",$("price").value!=="" && Number($("price").value)>=0,"من فضلك أدخل سعر الوحدة."],
+   ["supplier",$("supplier").value.trim(),"من فضلك اكتب اسم الشركة أو المورد."],
+   ["expiry",$("expiry").value,"من فضلك أدخل تاريخ الصلاحية."]
+ ];
+ if(addingMode!=="edit"){
+   const missing=requiredChecks.find(x=>!x[1]);
+   if(missing){const box=$("expiryError");box.textContent=missing[2];box.hidden=false;$(missing[0]).focus();return;}
+ }
+ const expiryValue=$("expiry").value;
+ const now=new Date();
+ const today=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+ if(expiryValue && expiryValue < today){
+   const msg="مرفوض: الصنف ده منتهي الصلاحية. تاريخ الصلاحية أقدم من تاريخ اليوم، ولم يتم حفظ الصنف.";
+   $("expiryError").textContent=msg; $("expiryError").hidden=false;
+   $("expiry").setCustomValidity(msg);
+   $("expiry").reportValidity();
+   return;
+ }
+ $("expiry").setCustomValidity(""); $("expiryError").hidden=true; $("expiryError").textContent="";
+ let qty=Number($("quantity").value),price=Number($("price").value);let batch={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:new Date().toISOString().slice(0,10),qty,price,supplier:$("supplier").value.trim(),expiry:$("expiry").value,notes:$("notes").value.trim(),type:addingMode==="batch"?"إضافة كمية":"رصيد افتتاحي"};
+ if(editId){let x=data.find(x=>x.id===editId);x.name=name;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(addingMode==="batch")x.batches.push(batch);else if(x.batches.length===0&&qty>0)x.batches.push(batch);}
+ else {let same=data.find(x=>x.warehouse===current&&x.name.toLowerCase()===name.toLowerCase());if(same){alert("هذا الصنف مسجل بالفعل. استخدم زر «＋ كمية» لإضافة دفعة جديدة.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),batches:qty>0?[batch]:[]});}
+ save();closeModal();render();
+};
+window.addBatch=id=>{let x=data.find(x=>x.id===id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+x.name;$("name").value=x.name;$("name").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("price").value=weighted(x).toFixed(2);$("supplier").value="";$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
+window.editItem=id=>{let x=data.find(x=>x.id===id);editId=id;addingMode="edit";$("modalTitle").textContent="تعديل بيانات الصنف";$("name").value=x.name;$("name").disabled=false;$("unit").value=x.unit;$("unit").disabled=false;$("quantity").value="";$("price").value="";$("supplier").value=x.supplier||"";$("expiry").value="";$("notes").value=x.notes||"";$("qtyLabel").textContent="لا تغيّر رصيد الصنف هنا";showModal()};
+window.historyItem=id=>{let x=data.find(x=>x.id===id);alert("حركة الصنف: "+x.name+"\n"+x.batches.map(b=>`${b.type}: ${b.qty} ${x.unit} | ${b.price} ج.م | ${b.date} | المورد: ${b.supplier||"—"} | الصلاحية: ${b.expiry||"—"}`).join("\n")||"لا توجد حركات مسجلة")};
+document.querySelectorAll("[data-warehouse]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-warehouse]").forEach(z=>z.classList.remove("active"));b.classList.add("active");current=b.dataset.warehouse;$("search").value="";render()});
+document.querySelectorAll("[data-main]").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("[data-main]").forEach(z=>z.classList.remove("active"));b.classList.add("active");
+ const isWarehouse=b.dataset.main==="warehouses",isBackup=b.dataset.main==="backup";
+ $("app").hidden=!isWarehouse;$("placeholder").hidden=isWarehouse||isBackup;$("backupSection").hidden=!isBackup;
+ if(!isWarehouse&&!isBackup){$("placeholderTitle").textContent=b.textContent.trim();}
+});
+// ترتيب التبويبات: سحب بالماوس أو باللمس، مع حفظ الترتيب.
+const mainNav=$("mainNav"), orderKey="cosmetics_main_nav_order_v1";
+function saveMainOrder(){localStorage.setItem(orderKey,JSON.stringify([...mainNav.querySelectorAll("[data-main]")].map(b=>b.dataset.main)));}
+function restoreMainOrder(){try{const order=JSON.parse(localStorage.getItem(orderKey)||"[]");order.forEach(key=>{const tab=mainNav.querySelector(`[data-main="${key}"]`);if(tab)mainNav.appendChild(tab);});}catch{}}
+restoreMainOrder();
+let dragged=null;
+mainNav.querySelectorAll(".tab").forEach(b=>{
+ b.addEventListener("dragstart",()=>dragged=b);
+ b.addEventListener("dragover",e=>e.preventDefault());
+ b.addEventListener("drop",e=>{e.preventDefault();if(dragged&&dragged!==b){mainNav.insertBefore(dragged,b);saveMainOrder();}});
+ b.addEventListener("pointerdown",e=>{if(e.pointerType!=="touch")return;dragged=b;});
+ b.addEventListener("pointerup",e=>{
+  if(e.pointerType!=="touch"||!dragged)return;
+  const target=document.elementFromPoint(e.clientX,e.clientY)?.closest("#mainNav [data-main]");
+  if(target&&target!==dragged){const r=target.getBoundingClientRect();mainNav.insertBefore(dragged,e.clientX<r.left+r.width/2?target:target.nextSibling);saveMainOrder();}
+  dragged=null;
+ });
+ b.addEventListener("pointercancel",()=>dragged=null);
+});
+$("backup").onclick=()=>{
+ try{const payload={app:"cosmetics_factory",version:1,exported:new Date().toISOString(),data};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="cosmetics-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ setSaveStatus("✓ تم تجهيز ملف النسخة الاحتياطية JSON.");
+ }catch(err){setSaveStatus("⚠️ تعذّر إنشاء النسخة الاحتياطية.",true);alert("تعذّر إنشاء ملف النسخة الاحتياطية.");}
+};
+$("restoreBtn").onclick=()=>$("restoreFile").click();
+$("restoreFile").onchange=async e=>{
+ const f=e.target.files[0];if(!f)return;
+ try{
+  const obj=JSON.parse(await f.text());
+  if(!obj||!Array.isArray(obj.data))throw Error("invalid");
+  if(!confirm("سيتم استبدال بيانات المخزن الحالية ببيانات الملف. هل تريد المتابعة؟"))return;
+  const previous=data;data=obj.data;
+  if(!save()){data=previous;throw Error("storage");}
+  render();setSaveStatus("✓ تم استيراد البيانات وحفظها تلقائيًا.");alert("تم استيراد بيانات المخزن بنجاح.");
+ }catch(err){alert("ملف JSON غير صالح أو تعذّر حفظ البيانات. لم يتم اعتماد الاستيراد.");}
+ finally{e.target.value="";}
+};
+if(localStorage.getItem(STORAGE_KEY)!==null){setSaveStatus("✓ تم تحميل البيانات المحفوظة في هذا المتصفح.");}
+else{setSaveStatus("لا توجد بيانات محفوظة بعد. أي إضافة أو تعديل سيتم حفظه تلقائيًا.");}
+render();
+</script>
+</body></html>
