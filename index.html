@@ -86,7 +86,8 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 <h2 id="modalTitle">إضافة صنف</h2>
 <form id="itemForm" novalidate>
 <div class="formgrid">
- <div class="field"><label>اسم الصنف *</label><input id="name" required maxlength="90" placeholder="مثال: جلسرين"></div>
+ <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" placeholder="Example: Glycerin"></div>
+ <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" placeholder="مثال: جلسرين"></div>
  <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
  <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
  <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0" step="0.01" required value=""></div>
@@ -104,11 +105,15 @@ const $=id=>document.getElementById(id);
 const STORAGE_KEY="cosmetics_stock_v1";
 let data=[];
 try{const stored=localStorage.getItem(STORAGE_KEY);data=stored?JSON.parse(stored):[];if(!Array.isArray(data))data=[];}catch(err){data=[];}
+data.forEach(x=>{if(!x.nameAr)x.nameAr=x.name||"";if(!x.nameEn)x.nameEn="";});
 let current="raw", editId=null, addingMode="new";
 function setSaveStatus(message,isError=false){const el=$("saveStatus");if(!el)return;el.textContent=message;el.classList.toggle("error",!!isError);}
 function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));const now=new Date();setSaveStatus("✓ تم الحفظ تلقائيًا — آخر حفظ: "+now.toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));return true;}catch(err){setSaveStatus("⚠️ تعذّر الحفظ على الهاتف. صدّر نسخة JSON فورًا.",true);return false;}}
 const money=n=>(Number(n)||0).toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2});
 function items(){return data.filter(x=>x.warehouse===current)}
+function primaryName(x){return x.nameEn||x.name||x.nameAr||""}
+function secondaryName(x){return x.nameAr||""}
+function normalizedName(s){return String(s||"").normalize("NFKC").toLocaleLowerCase().replace(/[\s\-_.,،؛:()\[\]{}]+/g,"").trim()}
 function weighted(x){let q=x.batches.reduce((s,b)=>s+Number(b.qty),0),v=x.batches.reduce((s,b)=>s+Number(b.qty)*Number(b.price),0);return q? v/q:0}
 let expandedItemId=null;
 function expiryStatus(item){
@@ -130,21 +135,21 @@ function expiryStatus(item){
 window.toggleItemDetails=id=>{if(typeof longPressFired!=="undefined"&&longPressFired){longPressFired=false;return;}expandedItemId=String(expandedItemId)===String(id)?null:id;render();};
 function render(){
  const list=items(), term=$("search").value.trim().toLowerCase();
- const filtered=list.filter(x=>(x.name+" "+(x.supplier||"")+" "+x.batches.map(b=>b.supplier||"").join(" ")).toLowerCase().includes(term));
+ const filtered=list.filter(x=>(primaryName(x)+" "+secondaryName(x)+" "+(x.supplier||"")+" "+x.batches.map(b=>b.supplier||"").join(" ")).toLowerCase().includes(term));
  $("rows").innerHTML=filtered.length?filtered.map(x=>{
   const q=x.batches.reduce((s,b)=>s+Number(b.qty),0);
   const expanded=String(expandedItemId)===String(x.id);
   const statusClass=expiryStatus(x);
   const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr data-batch-index="'+i+'"><td>'+(i+1)+'</td><td>'+esc(b.type||"إضافة كمية")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مضافة لهذا الصنف حتى الآن.</td></tr>';
-  return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف">'+esc(x.name)+' '+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(x.name)+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
+  return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف">'<span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)&&primaryName(x)!==secondaryName(x)?'<small style="display:block;color:var(--muted);font-weight:400">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
  }).join(""):'<tr><td colspan="5" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
  $("count").textContent=list.length.toLocaleString("en-US");
  $("qty").textContent=list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty),0),0).toLocaleString("en-US",{maximumFractionDigits:2});
  $("value").textContent=money(list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty)*Number(b.price),0),0))+" ج.م";
 }
 let pendingDeleteId=null,pendingDeleteBatch=null,longPressTimer=null,longPressFired=false;
-function openDeleteOptions(id){const x=data.find(z=>String(z.id)===String(id));if(!x)return;pendingDeleteId=id;pendingDeleteBatch=null;$('deleteTitle').textContent='حذف الصنف: '+x.name;$('deleteMessage').textContent='هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟';$('confirmDelete').textContent='حذف الصنف';$('deleteModal').classList.add('show');}
-function openDeleteBatchOptions(itemId,batchIndex){const x=data.find(z=>String(z.id)===String(itemId));if(!x||!x.batches[batchIndex])return;pendingDeleteId=itemId;pendingDeleteBatch=batchIndex;$('deleteTitle').textContent='حذف حركة من: '+x.name;$('deleteMessage').textContent='هل تريد حذف حركة الإضافة رقم '+(batchIndex+1)+' فقط؟ باقي الحركات والصنف سيظلان كما هما.';$('confirmDelete').textContent='حذف الحركة';$('deleteModal').classList.add('show');}
+function openDeleteOptions(id){const x=data.find(z=>String(z.id)===String(id));if(!x)return;pendingDeleteId=id;pendingDeleteBatch=null;$('deleteTitle').textContent='حذف الصنف: '+primaryName(x);$('deleteMessage').textContent='هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟';$('confirmDelete').textContent='حذف الصنف';$('deleteModal').classList.add('show');}
+function openDeleteBatchOptions(itemId,batchIndex){const x=data.find(z=>String(z.id)===String(itemId));if(!x||!x.batches[batchIndex])return;pendingDeleteId=itemId;pendingDeleteBatch=batchIndex;$('deleteTitle').textContent='حذف حركة من: '+primaryName(x);$('deleteMessage').textContent='هل تريد حذف حركة الإضافة رقم '+(batchIndex+1)+' فقط؟ باقي الحركات والصنف سيظلان كما هما.';$('confirmDelete').textContent='حذف الحركة';$('deleteModal').classList.add('show');}
 function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;pendingDeleteBatch=null;$('confirmDelete').textContent='حذف الصنف';}
 $('cancelDelete').onclick=closeDeleteOptions;
 $('confirmDelete').onclick=()=>{
@@ -154,13 +159,13 @@ $('confirmDelete').onclick=()=>{
  if(pendingDeleteBatch!==null){
   const batchIndex=pendingDeleteBatch,x=data[index];
   if(!x.batches[batchIndex]){closeDeleteOptions();alert('لم يتم العثور على الحركة المطلوبة. حدّث الصفحة وحاول مرة أخرى.');return;}
-  const batch=x.batches[batchIndex];x.batches.splice(batchIndex,1);const itemName=x.name;expandedItemId=id;
+  const batch=x.batches[batchIndex];x.batches.splice(batchIndex,1);const itemName=primaryName(x);expandedItemId=id;
   const saved=save();closeDeleteOptions();render();
   if(saved)alert('تم حذف حركة الإضافة من الصنف «'+itemName+'» بنجاح، مع الاحتفاظ بباقي الحركات.');
   else alert('تم حذف الحركة من الشاشة، لكن تعذّر تأكيد حفظها على الجهاز. راجع حالة الحفظ أسفل الصفحة.');
   return;
  }
- const dataName=data[index].name;data.splice(index,1);if(String(expandedItemId)===id)expandedItemId=null;const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}
+ const dataName=primaryName(data[index]);data.splice(index,1);if(String(expandedItemId)===id)expandedItemId=null;const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}
 };
 function cancelRowPress(){if(longPressTimer!==null){clearTimeout(longPressTimer);longPressTimer=null;}}
 function getRowAction(target){
@@ -199,13 +204,13 @@ $('rows').addEventListener('contextmenu',e=>{
 });
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showModal(){ $("modal").classList.add("show"); }
-function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("name").disabled=false; $("unit").disabled=false; $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
+function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("nameEn").disabled=false; $("nameAr").disabled=false; $("unit").disabled=false; $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
 $("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";showModal()};
 $("cancel").onclick=closeModal;
 $("search").oninput=render;
-function similarNames(name,except){let n=name.trim().toLowerCase();return data.filter(x=>x.warehouse===current&&x.id!==except&&(x.name.toLowerCase()===n||x.name.toLowerCase().includes(n)||n.includes(x.name.toLowerCase())||lev(n,x.name.toLowerCase())<=2)).slice(0,5)}
+function similarNames(names,except){const candidates=names.map(normalizedName).filter(Boolean);return data.filter(x=>x.warehouse===current&&x.id!==except&&[x.nameEn,x.nameAr,x.name].some(v=>candidates.includes(normalizedName(v)))).slice(0,5)}
 function lev(a,b){let d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
-$("name").addEventListener("input",()=>{let m=similarNames($("name").value,editId);$("similar").hidden=!m.length;$("similar").textContent=m.length?"تنبيه: توجد أسماء مطابقة أو متشابهة: "+m.map(x=>x.name).join("، ")+". راجعها قبل الحفظ؛ يمكنك الاستمرار إذا كان الصنف مختلفاً.":""});
+["nameEn","nameAr"].forEach(id=>$(id).addEventListener("input",()=>{let m=similarNames([$("nameEn").value,$("nameAr").value],editId);$("similar").hidden=!m.length;$("similar").textContent=m.length?"تنبيه: أحد الاسمين مسجل بالفعل في: "+m.map(x=>primaryName(x)+" / "+secondaryName(x)).join("، ")+". لا يمكن حفظ اسم مكرر.":""}));
 function localTodayISO(){
  const d=new Date();
  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -224,14 +229,16 @@ function validateExpiry(showMessage=true){
  return true;
 }
 $("expiry").min=localTodayISO();
-["name","quantity","price","supplier"].forEach(id=>$(id).addEventListener("input",()=>{
+["nameEn","nameAr","quantity","price","supplier"].forEach(id=>$(id).addEventListener("input",()=>{
  $("expiryError").hidden=true;$("expiryError").textContent="";
 }));
 $("expiry").addEventListener("input",()=>validateExpiry(true));
 $("expiry").addEventListener("change",()=>validateExpiry(true));
 $("itemForm").onsubmit=e=>{e.preventDefault();let name=$("name").value.trim();
+ const nameEn=$("nameEn").value.trim(),nameAr=$("nameAr").value.trim();
  const requiredChecks=[
-   ["name",name,"من فضلك اكتب اسم الصنف."],
+   ["nameEn",nameEn,"من فضلك اكتب اسم الصنف بالإنجليزي."],
+   ["nameAr",nameAr,"من فضلك اكتب اسم الصنف بالعربي."],
    ["quantity",$("quantity").value && Number($("quantity").value)>0,"من فضلك أدخل كمية صحيحة أكبر من صفر."],
    ["price",$("price").value!=="" && Number($("price").value)>=0,"من فضلك أدخل سعر الوحدة."],
    ["supplier",$("supplier").value.trim(),"من فضلك اكتب اسم الشركة أو المورد."],
@@ -246,12 +253,12 @@ $("itemForm").onsubmit=e=>{e.preventDefault();let name=$("name").value.trim();
    return;
  }
  let qty=Number($("quantity").value),price=Number($("price").value);let batch={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:new Date().toISOString().slice(0,10),qty,price,supplier:$("supplier").value.trim(),expiry:$("expiry").value,notes:$("notes").value.trim(),type:addingMode==="batch"?"إضافة كمية":"رصيد افتتاحي"};
- if(editId){let x=data.find(x=>x.id===editId);x.name=name;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(addingMode==="batch")x.batches.push(batch);else if(x.batches.length===0&&qty>0)x.batches.push(batch);}
- else {let same=data.find(x=>x.warehouse===current&&x.name.toLowerCase()===name.toLowerCase());if(same){alert("هذا الصنف مسجل بالفعل. استخدم زر «＋ كمية» لإضافة دفعة جديدة.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),batches:qty>0?[batch]:[]});}
+ if(editId){let x=data.find(x=>x.id===editId);if(addingMode==="batch"){x.batches.push(batch);}else{x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(x.batches.length===0&&qty>0)x.batches.push(batch);}}
+ else {const entered=[normalizedName(nameEn),normalizedName(nameAr)];const same=data.find(x=>x.warehouse===current&&[x.nameEn,x.nameAr,x.name].some(v=>entered.includes(normalizedName(v))));if(same){alert("هذا الاسم العربي أو الإنجليزي مسجل بالفعل للصنف «"+primaryName(same)+"». استخدم زر «＋ إضافة كمية جديدة» بدل إنشاء صنف مكرر.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name:nameEn,nameEn:nameEn,nameAr:nameAr,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),batches:qty>0?[batch]:[]});}
  save();closeModal();render();
 };
-window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+x.name;$("name").value=x.name;$("name").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("price").value=weighted(x).toFixed(2);$("supplier").value="";$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
-window.editItem=id=>{let x=data.find(x=>x.id===id);editId=id;addingMode="edit";$("modalTitle").textContent="تعديل بيانات الصنف";$("name").value=x.name;$("name").disabled=false;$("unit").value=x.unit;$("unit").disabled=false;$("quantity").value="";$("price").value="";$("supplier").value=x.supplier||"";$("expiry").value="";$("notes").value=x.notes||"";$("qtyLabel").textContent="لا تغيّر رصيد الصنف هنا";showModal()};
+window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+primaryName(x);$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=true;$("nameAr").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("price").value=weighted(x).toFixed(2);$("supplier").value="";$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
+window.editItem=id=>{let x=data.find(x=>x.id===id);editId=id;addingMode="edit";$("modalTitle").textContent="تعديل بيانات الصنف";$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=false;$("nameAr").disabled=false;$("unit").value=x.unit;$("unit").disabled=false;$("quantity").value="";$("price").value="";$("supplier").value=x.supplier||"";$("expiry").value="";$("notes").value=x.notes||"";$("qtyLabel").textContent="لا تغيّر رصيد الصنف هنا";showModal()};
 window.historyItem=id=>{let x=data.find(x=>x.id===id);alert("حركة الصنف: "+x.name+"\n"+x.batches.map(b=>`${b.type}: ${b.qty} ${x.unit} | ${b.price} ج.م | ${b.date} | المورد: ${b.supplier||"—"} | الصلاحية: ${b.expiry||"—"}`).join("\n")||"لا توجد حركات مسجلة")};
 document.querySelectorAll("[data-warehouse]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-warehouse]").forEach(z=>z.classList.remove("active"));b.classList.add("active");current=b.dataset.warehouse;$("search").value="";render()});
 document.querySelectorAll("[data-main]").forEach(b=>b.onclick=()=>{
