@@ -81,7 +81,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 </main>
 <footer>البيانات تُحفظ تلقائيًا في ذاكرة المتصفح على هذا الجهاز. احتفظ بنسخة JSON احتياطية بشكل دوري.</footer>
 <div id="saveStatus" class="save-status" role="status" aria-live="polite">جارٍ فحص بيانات الحفظ...</div>
-<div class="modal" id="deleteModal"><div class="dialog" style="max-width:360px"><h2 id="deleteTitle">إدارة الصنف</h2><p style="color:var(--muted);font-size:14px">هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟</p><div class="formactions"><button class="primary" type="button" id="confirmDelete" style="background:#a83232">حذف الصنف</button><button class="secondary" type="button" id="cancelDelete">تراجع</button></div></div></div>
+<div class="modal" id="deleteModal"><div class="dialog" style="max-width:360px"><h2 id="deleteTitle">إدارة الصنف</h2><p id="deleteMessage" style="color:var(--muted);font-size:14px">هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟</p><div class="formactions"><button class="primary" type="button" id="confirmDelete" style="background:#a83232">حذف الصنف</button><button class="secondary" type="button" id="cancelDelete">تراجع</button></div></div></div>
 <div class="modal" id="modal"><div class="dialog">
 <h2 id="modalTitle">إضافة صنف</h2>
 <form id="itemForm" novalidate>
@@ -118,32 +118,50 @@ function render(){
  $("rows").innerHTML=filtered.length?filtered.map(x=>{
   const q=x.batches.reduce((s,b)=>s+Number(b.qty),0);
   const expanded=String(expandedItemId)===String(x.id);
-  const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(b.type||"إضافة كمية")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مضافة لهذا الصنف حتى الآن.</td></tr>';
-  return '<tr><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف">'+esc(x.name)+' '+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(x.name)+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
+  const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr data-batch-index="'+i+'"><td>'+(i+1)+'</td><td>'+esc(b.type||"إضافة كمية")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مضافة لهذا الصنف حتى الآن.</td></tr>';
+  return '<tr><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف">'+esc(x.name)+' '+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(x.name)+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
  }).join(""):'<tr><td colspan="5" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
  $("count").textContent=list.length.toLocaleString("en-US");
  $("qty").textContent=list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty),0),0).toLocaleString("en-US",{maximumFractionDigits:2});
  $("value").textContent=money(list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty)*Number(b.price),0),0))+" ج.م";
 }
-let pendingDeleteId=null, longPressTimer=null, longPressFired=false;
-function openDeleteOptions(id){const x=data.find(z=>String(z.id)===String(id));if(!x)return;pendingDeleteId=id;$('deleteTitle').textContent='حذف الصنف: '+x.name;$('deleteModal').classList.add('show');}
-function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;}
+let pendingDeleteId=null,pendingDeleteBatch=null,longPressTimer=null,longPressFired=false;
+function openDeleteOptions(id){const x=data.find(z=>String(z.id)===String(id));if(!x)return;pendingDeleteId=id;pendingDeleteBatch=null;$('deleteTitle').textContent='حذف الصنف: '+x.name;$('deleteMessage').textContent='هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟';$('confirmDelete').textContent='حذف الصنف';$('deleteModal').classList.add('show');}
+function openDeleteBatchOptions(itemId,batchIndex){const x=data.find(z=>String(z.id)===String(itemId));if(!x||!x.batches[batchIndex])return;pendingDeleteId=itemId;pendingDeleteBatch=batchIndex;$('deleteTitle').textContent='حذف حركة من: '+x.name;$('deleteMessage').textContent='هل تريد حذف حركة الإضافة رقم '+(batchIndex+1)+' فقط؟ باقي الحركات والصنف سيظلان كما هما.';$('confirmDelete').textContent='حذف الحركة';$('deleteModal').classList.add('show');}
+function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;pendingDeleteBatch=null;$('confirmDelete').textContent='حذف الصنف';}
 $('cancelDelete').onclick=closeDeleteOptions;
-$('confirmDelete').onclick=()=>{if(pendingDeleteId===null||pendingDeleteId===undefined)return;const id=String(pendingDeleteId);const index=data.findIndex(z=>String(z.id)===id);if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب حذفه. حدّث الصفحة وحاول مرة أخرى.');return;}const dataName=data[index].name;data.splice(index,1);const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}};
+$('confirmDelete').onclick=()=>{
+ if(pendingDeleteId===null||pendingDeleteId===undefined)return;
+ const id=String(pendingDeleteId),index=data.findIndex(z=>String(z.id)===id);
+ if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب. حدّث الصفحة وحاول مرة أخرى.');return;}
+ if(pendingDeleteBatch!==null){
+  const batchIndex=pendingDeleteBatch,x=data[index];
+  if(!x.batches[batchIndex]){closeDeleteOptions();alert('لم يتم العثور على الحركة المطلوبة. حدّث الصفحة وحاول مرة أخرى.');return;}
+  const batch=x.batches[batchIndex];x.batches.splice(batchIndex,1);const itemName=x.name;expandedItemId=id;
+  const saved=save();closeDeleteOptions();render();
+  if(saved)alert('تم حذف حركة الإضافة من الصنف «'+itemName+'» بنجاح، مع الاحتفاظ بباقي الحركات.');
+  else alert('تم حذف الحركة من الشاشة، لكن تعذّر تأكيد حفظها على الجهاز. راجع حالة الحفظ أسفل الصفحة.');
+  return;
+ }
+ const dataName=data[index].name;data.splice(index,1);if(String(expandedItemId)===id)expandedItemId=null;const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}
+};
 function cancelRowPress(){if(longPressTimer!==null){clearTimeout(longPressTimer);longPressTimer=null;}}
-function getRowItemId(target){
- const row=target instanceof Element?target.closest('tbody#rows tr'):null;
- if(!row||target.closest('.actions'))return null;
+function getRowAction(target){
+ if(!(target instanceof Element)||target.closest('.actions'))return null;
+ const batchRow=target.closest('tr[data-batch-index]');
+ if(batchRow){const details=batchRow.closest('tr.batch-details');if(details)return {type:'batch',itemId:details.dataset.itemId,index:Number(batchRow.dataset.batchIndex)};}
+ const row=target.closest('tbody#rows tr');if(!row)return null;
  const nameButton=row.querySelector('.item-name[data-item-id]');
- return nameButton?nameButton.dataset.itemId:null;
+ return nameButton?{type:'item',itemId:nameButton.dataset.itemId}:null;
 }
+function openRowDelete(action){if(action.type==='batch')openDeleteBatchOptions(action.itemId,action.index);else openDeleteOptions(action.itemId);}
 // Touch handling is registered directly for iPhone Safari (not gated on PointerEvent).
 let touchStartX=0,touchStartY=0;
 $('rows').addEventListener('touchstart',e=>{
- const id=getRowItemId(e.target);if(!id)return;
+ const action=getRowAction(e.target);if(!action)return;
  cancelRowPress();longPressFired=false;
  const touch=e.touches[0];touchStartX=touch.clientX;touchStartY=touch.clientY;
- longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openDeleteOptions(id);},800);
+ longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openRowDelete(action);},800);
 },{passive:true});
 $('rows').addEventListener('touchmove',e=>{
  if(longPressTimer===null)return;
@@ -154,13 +172,13 @@ $('rows').addEventListener('touchmove',e=>{
 // Mouse/trackpad support; touch uses the dedicated touch handlers above.
 $('rows').addEventListener('pointerdown',e=>{
  if(e.pointerType==='touch')return;
- const id=getRowItemId(e.target);if(!id)return;
- cancelRowPress();longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openDeleteOptions(id);},800);
+ const action=getRowAction(e.target);if(!action)return;
+ cancelRowPress();longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openRowDelete(action);},800);
 });
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>$('rows').addEventListener(ev,cancelRowPress));
 $('rows').addEventListener('contextmenu',e=>{
- const id=getRowItemId(e.target);if(!id)return;
- e.preventDefault();cancelRowPress();longPressFired=true;openDeleteOptions(id);
+ const action=getRowAction(e.target);if(!action)return;
+ e.preventDefault();cancelRowPress();longPressFired=true;openRowDelete(action);
 });
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showModal(){ $("modal").classList.add("show"); }
