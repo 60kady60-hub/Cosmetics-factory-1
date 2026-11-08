@@ -122,45 +122,37 @@ function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingD
 $('cancelDelete').onclick=closeDeleteOptions;
 $('confirmDelete').onclick=()=>{if(pendingDeleteId===null||pendingDeleteId===undefined)return;const id=String(pendingDeleteId);const index=data.findIndex(z=>String(z.id)===id);if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب حذفه. حدّث الصفحة وحاول مرة أخرى.');return;}const dataName=data[index].name;data.splice(index,1);const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}};
 function cancelRowPress(){if(longPressTimer!==null){clearTimeout(longPressTimer);longPressTimer=null;}}
-function rowFromEvent(e){return e.target instanceof Element?e.target.closest('tr'):null;}
-function beginRowPress(e){
- const row=rowFromEvent(e);
- if(!row||e.target.closest('.actions'))return;
+function getRowItemId(target){
+ const row=target instanceof Element?target.closest('tbody#rows tr'):null;
+ if(!row||target.closest('.actions'))return null;
  const nameButton=row.querySelector('.item-name[data-item-id]');
- if(!nameButton)return;
- cancelRowPress();longPressFired=false;
- const id=nameButton.dataset.itemId;
- longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openDeleteOptions(id);},750);
+ return nameButton?nameButton.dataset.itemId:null;
 }
-$('rows').addEventListener('pointerdown',beginRowPress);
-$('rows').addEventListener('pointermove',e=>{
+// Touch handling is registered directly for iPhone Safari (not gated on PointerEvent).
+let touchStartX=0,touchStartY=0;
+$('rows').addEventListener('touchstart',e=>{
+ const id=getRowItemId(e.target);if(!id)return;
+ cancelRowPress();longPressFired=false;
+ const touch=e.touches[0];touchStartX=touch.clientX;touchStartY=touch.clientY;
+ longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openDeleteOptions(id);},800);
+},{passive:true});
+$('rows').addEventListener('touchmove',e=>{
  if(longPressTimer===null)return;
- const row=rowFromEvent(e);
- if(!row||Math.abs(e.movementX||0)>8||Math.abs(e.movementY||0)>8)cancelRowPress();
+ const touch=e.touches[0];
+ if(Math.abs(touch.clientX-touchStartX)>14||Math.abs(touch.clientY-touchStartY)>14)cancelRowPress();
+},{passive:true});
+['touchend','touchcancel'].forEach(ev=>$('rows').addEventListener(ev,cancelRowPress));
+// Mouse/trackpad support; touch uses the dedicated touch handlers above.
+$('rows').addEventListener('pointerdown',e=>{
+ if(e.pointerType==='touch')return;
+ const id=getRowItemId(e.target);if(!id)return;
+ cancelRowPress();longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openDeleteOptions(id);},800);
 });
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>$('rows').addEventListener(ev,cancelRowPress));
 $('rows').addEventListener('contextmenu',e=>{
- if(e.target.closest('.actions'))return;
- const row=rowFromEvent(e);if(!row)return;
- const nameButton=row.querySelector('.item-name[data-item-id]');if(!nameButton)return;
- e.preventDefault();cancelRowPress();longPressFired=true;openDeleteOptions(nameButton.dataset.itemId);
+ const id=getRowItemId(e.target);if(!id)return;
+ e.preventDefault();cancelRowPress();longPressFired=true;openDeleteOptions(id);
 });
-// Fallback للأجهزة القديمة التي لا تدعم Pointer Events.
-if(!('PointerEvent' in window)){
- let touchX=0,touchY=0;
- $('rows').addEventListener('touchstart',e=>{
-  const row=rowFromEvent(e);if(!row||e.target.closest('.actions'))return;
-  const nameButton=row.querySelector('.item-name[data-item-id]');if(!nameButton)return;
-  cancelRowPress();longPressFired=false;touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;
-  const id=nameButton.dataset.itemId;
-  longPressTimer=setTimeout(()=>{longPressTimer=null;longPressFired=true;openDeleteOptions(id);},750);
- },{passive:true});
- $('rows').addEventListener('touchmove',e=>{
-  if(longPressTimer===null)return;const t=e.touches[0];
-  if(Math.abs(t.clientX-touchX)>12||Math.abs(t.clientY-touchY)>12)cancelRowPress();
- },{passive:true});
- ['touchend','touchcancel'].forEach(ev=>$('rows').addEventListener(ev,cancelRowPress));
-}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showModal(){ $("modal").classList.add("show"); }
 function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("name").disabled=false; $("unit").disabled=false; $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
