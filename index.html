@@ -111,7 +111,7 @@ const money=n=>(Number(n)||0).toLocaleString("ar-EG",{minimumFractionDigits:2,ma
 function items(){return data.filter(x=>x.warehouse===current)}
 function weighted(x){let q=x.batches.reduce((s,b)=>s+Number(b.qty),0),v=x.batches.reduce((s,b)=>s+Number(b.qty)*Number(b.price),0);return q? v/q:0}
 let expandedItemId=null;
-window.toggleItemDetails=id=>{expandedItemId=String(expandedItemId)===String(id)?null:id;render();};
+window.toggleItemDetails=id=>{if(typeof longPressFired!=="undefined"&&longPressFired){longPressFired=false;return;}expandedItemId=String(expandedItemId)===String(id)?null:id;render();};
 function render(){
  const list=items(), term=$("search").value.trim().toLowerCase();
  const filtered=list.filter(x=>(x.name+" "+(x.supplier||"")).toLowerCase().includes(term));
