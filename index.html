@@ -170,7 +170,7 @@ function validateExpiry(showMessage=true){
  const field=$("expiry"),value=field.value,today=localTodayISO();
  field.min=today;
  if(value && value<today){
-  const msg="مرفوض: الصنف ده منتهي الصلاحية. اختار تاريخ اليوم أو تاريخًا قادمًا.";
+  const msg="صنف منتهي الصلاحية";
   field.setCustomValidity(msg);
   if(showMessage){$("expiryError").textContent=msg;$("expiryError").hidden=false;}
   return false;
