@@ -26,6 +26,7 @@ main{max-width:1100px;margin:auto;padding:16px}
 .metric small{color:var(--muted);display:block;margin-bottom:7px}.metric strong{font-size:20px;color:var(--green)}
 .toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:14px 0}
 button.primary{background:var(--green);color:#fff;border:0;border-radius:11px;padding:12px 16px;font-weight:700;cursor:pointer}
+.toolbar-actions{display:flex;align-items:center;gap:8px}.guide-bell{width:43px;height:43px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--green);font-size:20px;display:grid;place-items:center;cursor:pointer}.guide-bell:active{transform:scale(.96)}
 button.secondary{background:white;color:var(--green);border:1px solid var(--line);border-radius:11px;padding:11px 14px;cursor:pointer}
 input,select,textarea{font:inherit;border:1px solid #cfdad3;border-radius:10px;padding:11px;background:white;width:100%;min-width:0}
 .search{max-width:310px}
@@ -55,7 +56,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 </nav>
 <main>
 <div id="app">
- <div class="notice">ابدأ بإدخال الرصيد الافتتاحي لكل صنف مرة واحدة. بعد ذلك سجّل أي زيادة من خلال «إضافة كمية» حتى يحتفظ البرنامج بتاريخ كل دفعة وسعرها وموردها وصلاحيتها.</div>
+ 
  <div class="summary">
   <div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div>
   <div class="metric"><small>إجمالي الكميات (كل صنف بوحدته)</small><strong id="qty">0</strong></div>
@@ -67,7 +68,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
   <button class="tab" data-warehouse="equipment">🛠️ المعدات</button>
   <button class="tab" data-warehouse="finished">🧴 المنتجات النهائية</button>
  </div>
- <div class="toolbar"><button class="primary" id="addItem">＋ إضافة صنف جديد</button><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
+ <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إضافة صنف جديد</button><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">🔔</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
  <div class="tablewrap"><table><thead><tr><th>اسم الصنف</th><th>الوحدة</th><th>الرصيد الإجمالي</th><th>متوسط سعر الوحدة</th><th>إضافة كمية</th></tr></thead><tbody id="rows"></tbody></table></div>
  <p class="muted" style="font-size:12px;margin-top:10px">ملاحظة: قيمة المخزون ومتوسط السعر تقديريان على أساس متوسط تكلفة الشراء المرجح. المعدات تُسجّل كأصول/عدد ولا تدخل تلقائياً في تكلفة الخامات.</p>
 </div>
@@ -81,6 +82,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 </main>
 <footer>البيانات تُحفظ تلقائيًا في ذاكرة المتصفح على هذا الجهاز. احتفظ بنسخة JSON احتياطية بشكل دوري.</footer>
 <div id="saveStatus" class="save-status" role="status" aria-live="polite">جارٍ فحص بيانات الحفظ...</div>
+<div class="modal" id="guideModal" role="dialog" aria-modal="true" aria-labelledby="guideTitle"><div class="dialog" style="max-width:430px"><h2 id="guideTitle">إرشادات تسجيل الأصناف</h2><p style="font-size:14px;line-height:1.9;color:var(--text);margin:0 0 16px">ابدأ بإدخال الرصيد الافتتاحي لكل صنف مرة واحدة. بعد ذلك سجّل أي زيادة من خلال «إضافة كمية» حتى يحتفظ البرنامج بتاريخ كل دفعة وسعرها وموردها وصلاحيتها.</p><div class="formactions"><button class="primary" type="button" id="closeGuide">حسنًا</button></div></div></div>
 <div class="modal" id="deleteModal"><div class="dialog" style="max-width:360px"><h2 id="deleteTitle">إدارة الصنف</h2><p id="deleteMessage" style="color:var(--muted);font-size:14px">هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟</p><div class="formactions"><button class="primary" type="button" id="confirmDelete" style="background:#a83232">حذف الصنف</button><button class="secondary" type="button" id="cancelDelete">تراجع</button></div></div></div>
 <div class="modal" id="modal"><div class="dialog">
 <h2 id="modalTitle">إضافة صنف</h2>
@@ -206,6 +208,7 @@ function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&l
 function showModal(){ $("modal").classList.add("show"); }
 function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("nameEn").disabled=false; $("nameAr").disabled=false; $("unit").disabled=false;["quantity","price","supplier","expiry","notes"].forEach(id=>$(id).disabled=false); $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
 $("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";showModal()};
+$("guideBell").onclick=()=>$("guideModal").classList.add("show");$("closeGuide").onclick=()=>$("guideModal").classList.remove("show");$("guideModal").addEventListener("click",e=>{if(e.target===$("guideModal"))$("guideModal").classList.remove("show")});
 $("cancel").onclick=closeModal;
 $("search").oninput=render;
 function similarNames(names,except){const candidates=names.map(normalizedName).filter(Boolean);return data.filter(x=>x.warehouse===current&&x.id!==except&&[x.nameEn,x.nameAr,x.name].some(v=>candidates.includes(normalizedName(v)))).slice(0,5)}
