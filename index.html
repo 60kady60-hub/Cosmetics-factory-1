@@ -39,7 +39,7 @@ table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 10p
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}.field.full{grid-column:1/-1}.formactions{display:flex;gap:8px;margin-top:16px}
 .badge{font-size:11px;background:#edf4f0;color:#28574b;padding:4px 7px;border-radius:20px}
 .item-name{border:0;background:transparent;color:var(--green);font:inherit;font-weight:700;padding:8px 5px;cursor:pointer;touch-action:manipulation;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}.item-name:focus{outline:2px solid var(--gold);border-radius:6px}
-.batch-details td{background:#f8fbf9;padding:12px}.stock-near-expiry>td{background:#fff4c2!important}.stock-expired>td{background:#ffdada!important}.stock-near-expiry .item-name,.stock-expired .item-name{background:transparent!important}.batch-details.stock-near-expiry>td{background:#fff4c2!important}.batch-details.stock-expired>td{background:#ffdada!important}.batch-details-inner{display:grid;gap:12px}.batch-details-inner>.tablewrap{border-radius:10px}.batch-details-inner table{min-width:650px}.batch-details-inner th,.batch-details-inner td{white-space:nowrap}.batch-details-inner strong{color:var(--green)}
+.batch-details td{background:#f8fbf9;padding:12px}.stock-near-expiry>td{background:#fff4c2!important}.stock-expired>td,.stock-out>td{background:#ffdada!important}.stock-low>td{background:#ffe8c2!important}.stock-near-expiry .item-name,.stock-expired .item-name,.stock-low .item-name,.stock-out .item-name{background:transparent!important}.batch-details.stock-near-expiry>td{background:#fff4c2!important}.batch-details.stock-expired>td,.batch-details.stock-out>td{background:#ffdada!important}.batch-details.stock-low>td{background:#ffe8c2!important}.batch-details-inner{display:grid;gap:12px}.batch-details-inner>.tablewrap{border-radius:10px}.batch-details-inner table{min-width:650px}.batch-details-inner th,.batch-details-inner td{white-space:nowrap}.batch-details-inner strong{color:var(--green)}
 
 .expiry-ticker{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border:1px solid #e4c66e;border-radius:12px;background:#fff9e8;color:#624812;overflow:hidden;min-height:48px}
 .expiry-ticker[hidden]{display:none}
@@ -50,7 +50,7 @@ table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 10p
 .expiry-ticker:hover .expiry-ticker-track{animation-play-state:paused}
 .expiry-alert{font-size:13px;font-weight:700}
 .expiry-alert.expired{color:#a32121}
-.expiry-alert.near{color:#805b08}
+.expiry-alert.near{color:#805b08}.expiry-alert.stockout{color:#a32121}.expiry-alert.low{color:#a85a08}
 .expiry-alert::before{content:"●";font-size:10px;margin-left:7px}
 @keyframes expiryTickerMove{from{transform:translateX(0)}to{transform:translateX(50%)}}
 @media(prefers-reduced-motion:reduce){.expiry-ticker-track{animation:none;flex-wrap:wrap;width:auto}.expiry-ticker-group[aria-hidden=true]{display:none}}
@@ -107,6 +107,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
  <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" autocomplete="off" placeholder="مثال: جلسرين" title="اكتب حروفًا عربية فقط"></div>
  <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
  <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
+ <div class="field"><label>الحد الأدنى للمخزون (اختياري)</label><input id="minStock" type="number" min="0" step="0.001" placeholder="اتركه فارغًا بدون تنبيه"></div>
  <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0.01" step="0.01" required value=""></div>
  <div class="field"><label>الشركة / المورد *</label><input id="supplier" required placeholder="اسم المورد"></div>
  <div class="field"><label>تاريخ الصلاحية *</label><input id="expiry" type="date" required></div>
@@ -133,6 +134,9 @@ function secondaryName(x){return x.nameAr||""}
 function normalizedName(s){return String(s||"").normalize("NFKC").toLocaleLowerCase().replace(/[\s\-_.,،؛:()\[\]{}]+/g,"").trim()}
 function weighted(x){let q=x.batches.reduce((s,b)=>s+Number(b.qty),0),v=x.batches.reduce((s,b)=>s+Number(b.qty)*Number(b.price),0);return q? v/q:0}
 let expandedItemId=null;
+function totalStock(item){return (item.batches||[]).reduce((sum,b)=>sum+Number(b.qty||0),0);}
+function minimumStockStatus(item){const raw=item.minStock;if(raw===null||raw===undefined||String(raw).trim()==="")return "";const limit=Number(raw);if(!Number.isFinite(limit)||limit<0)return "";const qty=totalStock(item);if(qty<=0)return "stock-out";return qty<=limit?"stock-low":"";}
+function rowStockStatus(item){const expiry=expiryStatus(item),stock=minimumStockStatus(item);return expiry==="stock-expired"?"stock-expired":stock==="stock-out"?"stock-out":stock==="stock-low"?"stock-low":expiry;}
 function expiryStatus(item){
  const today=localTodayISO();
  const [year,month,day]=today.split("-").map(Number);
@@ -151,11 +155,12 @@ function expiryStatus(item){
 }
 
 function updateExpiryTicker(){
- const alerts=items().map(item=>({item,status:expiryStatus(item)})).filter(x=>x.status).sort((a,b)=>a.status===b.status?primaryName(a.item).localeCompare(primaryName(b.item),"en",{sensitivity:"base"}):(a.status==="stock-expired"?-1:1));
+ const priority={"stock-expired":0,"stock-out":1,"stock-low":2,"stock-near-expiry":3};
+ const alerts=items().flatMap(item=>[{item,status:expiryStatus(item)},{item,status:minimumStockStatus(item)}].filter(x=>x.status)).sort((a,b)=>priority[a.status]-priority[b.status]||primaryName(a.item).localeCompare(primaryName(b.item),"en",{sensitivity:"base"}));
  const ticker=$("expiryTicker"),track=$("expiryTickerTrack");
  if(!ticker||!track)return;
  if(!alerts.length){ticker.hidden=true;track.innerHTML="";return;}
- const content=alerts.map(({item,status})=>'<span class="expiry-alert '+(status==="stock-expired"?"expired":"near")+'"><b dir="auto">'+esc(primaryName(item))+(secondaryName(item)?" — "+esc(secondaryName(item)):"")+'</b><span>'+(status==="stock-expired"?" — منتهي الصلاحية":" — أوشكت الصلاحية على الانتهاء")+'</span></span>').join("");
+ const content=alerts.map(({item,status})=>{const cls=status==="stock-expired"?"expired":status==="stock-out"?"stockout":status==="stock-low"?"low":"near";const message=status==="stock-expired"?"منتهي الصلاحية":status==="stock-out"?"نفد المخزون":status==="stock-low"?"وصل للحد الأدنى للمخزون":"أوشكت الصلاحية على الانتهاء";return '<span class="expiry-alert '+cls+'"><b dir="auto">'+esc(primaryName(item))+(secondaryName(item)?" — "+esc(secondaryName(item)):"")+'</b><span> — '+message+'</span></span>';}).join("");
  track.innerHTML='<div class="expiry-ticker-group">'+content+'</div><div class="expiry-ticker-group" aria-hidden="true">'+content+'</div>';
  ticker.hidden=false;
 }
@@ -166,7 +171,7 @@ function render(){
  $("rows").innerHTML=filtered.length?filtered.map(x=>{
   const q=x.batches.reduce((s,b)=>s+Number(b.qty),0);
   const expanded=String(expandedItemId)===String(x.id);
-  const statusClass=expiryStatus(x);
+  const statusClass=rowStockStatus(x);
   const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr data-batch-index="'+i+'"><td>'+(i+1)+'</td><td>'+esc(b.type||"إضافة كمية")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مضافة لهذا الصنف حتى الآن.</td></tr>';
   return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف"><span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)?'<small style="display:block;color:var(--muted);font-weight:400">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
  }).join(""):'<tr><td colspan="5" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
@@ -232,8 +237,8 @@ $('rows').addEventListener('contextmenu',e=>{
 });
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showModal(){ $("modal").classList.add("show"); }
-function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("nameEn").disabled=false; $("nameAr").disabled=false; $("unit").disabled=false;["quantity","price","supplier","expiry","notes"].forEach(id=>$(id).disabled=false); $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
-$("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";showModal()};
+function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("nameEn").disabled=false; $("nameAr").disabled=false; $("unit").disabled=false;["quantity","minStock","price","supplier","expiry","notes"].forEach(id=>$(id).disabled=false); $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; }
+$("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";$("minStock").value="";$("minStock").disabled=false;showModal()};
 $("guideBell").onclick=()=>$("guideModal").classList.add("show");$("closeGuide").onclick=()=>$("guideModal").classList.remove("show");$("guideModal").addEventListener("click",e=>{if(e.target===$("guideModal"))$("guideModal").classList.remove("show")});
 $("cancel").onclick=closeModal;
 $("search").oninput=render;
@@ -261,7 +266,7 @@ function validateExpiry(showMessage=true){
  return true;
 }
 $("expiry").min=localTodayISO();
-["nameEn","nameAr","quantity","price","supplier"].forEach(id=>$(id).addEventListener("input",()=>{
+["nameEn","nameAr","quantity","minStock","price","supplier"].forEach(id=>$(id).addEventListener("input",()=>{
  $("expiryError").hidden=true;$("expiryError").textContent="";
 }));
 $("expiry").addEventListener("input",()=>validateExpiry(true));
@@ -287,13 +292,14 @@ $("itemForm").onsubmit=e=>{e.preventDefault();
    $("expiry").reportValidity();
    return;
  }
+ const minStockValue=$("minStock").value.trim();const minStock=minStockValue===""?null:Number(minStockValue);if(minStockValue!==""&&(!Number.isFinite(minStock)||minStock<0)){const box=$("expiryError");box.textContent="الحد الأدنى للمخزون يجب أن يكون صفرًا أو أكبر.";box.hidden=false;$("minStock").focus();return;}
  const priceValue=$("price").value;const unitPrice=Number(priceValue);if(priceValue.trim()===""||!Number.isFinite(unitPrice)||unitPrice<=0){const box=$("expiryError");box.textContent="سعر الوحدة يجب أن يكون أكبر من صفر، ولا يمكن تسجيل الحركة بسعر صفر.";box.hidden=false;$("price").focus();return;}
   let qty=Number($("quantity").value),price=unitPrice;let batch={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:new Date().toISOString().slice(0,10),qty,price,supplier:$("supplier").value.trim(),expiry:$("expiry").value,notes:$("notes").value.trim(),type:addingMode==="batch"?"إضافة كمية":"رصيد افتتاحي"};
  if(editId){let x=data.find(x=>x.id===editId);if(addingMode==="batch"){x.batches.push(batch);}else{x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(x.batches.length===0&&qty>0)x.batches.push(batch);}}
- else {const entered=[normalizedName(nameEn),normalizedName(nameAr)];const same=data.find(x=>x.warehouse===current&&[x.nameEn,x.nameAr,x.name].some(v=>entered.includes(normalizedName(v))));if(same){alert("هذا الاسم العربي أو الإنجليزي مسجل بالفعل للصنف «"+primaryName(same)+"». استخدم زر «＋ إضافة كمية جديدة» بدل إنشاء صنف مكرر.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name:nameEn,nameEn:nameEn,nameAr:nameAr,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),batches:qty>0?[batch]:[]});}
+ else {const entered=[normalizedName(nameEn),normalizedName(nameAr)];const same=data.find(x=>x.warehouse===current&&[x.nameEn,x.nameAr,x.name].some(v=>entered.includes(normalizedName(v))));if(same){alert("هذا الاسم العربي أو الإنجليزي مسجل بالفعل للصنف «"+primaryName(same)+"». استخدم زر «＋ إضافة كمية جديدة» بدل إنشاء صنف مكرر.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name:nameEn,nameEn:nameEn,nameAr:nameAr,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),minStock:minStock,batches:qty>0?[batch]:[]});}
  save();closeModal();render();
 };
-window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+primaryName(x);$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=true;$("nameAr").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("price").value=weighted(x).toFixed(2);$("supplier").value="";$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
+window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+primaryName(x);$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=true;$("nameAr").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("minStock").value=x.minStock??"";$("minStock").disabled=true;$("price").value=weighted(x).toFixed(2);$("supplier").value="";$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
 window.historyItem=id=>{let x=data.find(x=>x.id===id);alert("حركة الصنف: "+x.name+"\n"+x.batches.map(b=>`${b.type}: ${b.qty} ${x.unit} | ${b.price} ج.م | ${b.date} | المورد: ${b.supplier||"—"} | الصلاحية: ${b.expiry||"—"}`).join("\n")||"لا توجد حركات مسجلة")};
 document.querySelectorAll("[data-warehouse]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-warehouse]").forEach(z=>z.classList.remove("active"));b.classList.add("active");current=b.dataset.warehouse;$("search").value="";render()});
 document.querySelectorAll("[data-main]").forEach(b=>b.onclick=()=>{
