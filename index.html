@@ -86,8 +86,8 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 <h2 id="modalTitle">إضافة صنف</h2>
 <form id="itemForm" novalidate>
 <div class="formgrid">
- <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" placeholder="Example: Glycerin"></div>
- <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" placeholder="مثال: جلسرين"></div>
+ <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" autocomplete="off" placeholder="Example: Glycerin"></div>
+ <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" autocomplete="off" placeholder="مثال: جلسرين"></div>
  <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
  <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
  <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0" step="0.01" required value=""></div>
@@ -141,7 +141,7 @@ function render(){
   const expanded=String(expandedItemId)===String(x.id);
   const statusClass=expiryStatus(x);
   const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr data-batch-index="'+i+'"><td>'+(i+1)+'</td><td>'+esc(b.type||"إضافة كمية")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مضافة لهذا الصنف حتى الآن.</td></tr>';
-  return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف"><span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)?'<small data-edit-names="1" onclick="event.stopPropagation();editNames(\''+x.id+'\')" style="display:block;color:var(--muted);font-weight:400;text-decoration:underline dotted" title="اضغط لتعديل الاسمين">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
+  return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف"><span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)?'<small style="display:block;color:var(--muted);font-weight:400">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
  }).join(""):'<tr><td colspan="5" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
  $("count").textContent=list.length.toLocaleString("en-US");
  $("qty").textContent=list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty),0),0).toLocaleString("en-US",{maximumFractionDigits:2});
@@ -211,6 +211,8 @@ $("search").oninput=render;
 function similarNames(names,except){const candidates=names.map(normalizedName).filter(Boolean);return data.filter(x=>x.warehouse===current&&x.id!==except&&[x.nameEn,x.nameAr,x.name].some(v=>candidates.includes(normalizedName(v)))).slice(0,5)}
 function lev(a,b){let d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
 ["nameEn","nameAr"].forEach(id=>$(id).addEventListener("input",()=>{let m=similarNames([$("nameEn").value,$("nameAr").value],editId);$("similar").hidden=!m.length;$("similar").textContent=m.length?"تنبيه: أحد الاسمين مسجل بالفعل في: "+m.map(x=>primaryName(x)+" / "+secondaryName(x)).join("، ")+". لا يمكن حفظ اسم مكرر.":""}));
+function validEnglishName(value){return /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/.test(String(value||"").trim());}
+function validArabicName(value){return /^[\u0621-\u064A\u066E-\u06D3\u0750-\u077F\u064B-\u065F\u0670 ]+$/u.test(String(value||"").trim());}
 function localTodayISO(){
  const d=new Date();
  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -236,6 +238,8 @@ $("expiry").addEventListener("input",()=>validateExpiry(true));
 $("expiry").addEventListener("change",()=>validateExpiry(true));
 $("itemForm").onsubmit=e=>{e.preventDefault();
  const nameEn=$("nameEn").value.trim(),nameAr=$("nameAr").value.trim();
+ if(addingMode==="new"&&!validEnglishName(nameEn)){const box=$("expiryError");box.textContent="اسم الصنف الأول يجب أن يحتوي على حروف إنجليزية فقط (A-Z).";box.hidden=false;$("nameEn").focus();return;}
+ if(addingMode==="new"&&!validArabicName(nameAr)){const box=$("expiryError");box.textContent="اسم الصنف الثاني يجب أن يحتوي على حروف عربية فقط.";box.hidden=false;$("nameAr").focus();return;}
  const requiredChecks=[
    ["nameEn",nameEn,"من فضلك اكتب اسم الصنف بالإنجليزي."],
    ["nameAr",nameAr,"من فضلك اكتب اسم الصنف بالعربي."],
@@ -253,13 +257,11 @@ $("itemForm").onsubmit=e=>{e.preventDefault();
    return;
  }
  let qty=Number($("quantity").value),price=Number($("price").value);let batch={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:new Date().toISOString().slice(0,10),qty,price,supplier:$("supplier").value.trim(),expiry:$("expiry").value,notes:$("notes").value.trim(),type:addingMode==="batch"?"إضافة كمية":"رصيد افتتاحي"};
- if(editId){let x=data.find(x=>x.id===editId);if(addingMode==="batch"){x.batches.push(batch);}else if(addingMode==="rename"){x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;}else{x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(x.batches.length===0&&qty>0)x.batches.push(batch);}}
+ if(editId){let x=data.find(x=>x.id===editId);if(addingMode==="batch"){x.batches.push(batch);}else{x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(x.batches.length===0&&qty>0)x.batches.push(batch);}}
  else {const entered=[normalizedName(nameEn),normalizedName(nameAr)];const same=data.find(x=>x.warehouse===current&&[x.nameEn,x.nameAr,x.name].some(v=>entered.includes(normalizedName(v))));if(same){alert("هذا الاسم العربي أو الإنجليزي مسجل بالفعل للصنف «"+primaryName(same)+"». استخدم زر «＋ إضافة كمية جديدة» بدل إنشاء صنف مكرر.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name:nameEn,nameEn:nameEn,nameAr:nameAr,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),batches:qty>0?[batch]:[]});}
  save();closeModal();render();
 };
-window.editNames=id=>{let x=data.find(x=>String(x.id)===String(id));if(!x)return;editId=x.id;addingMode="rename";$("modalTitle").textContent="تعديل اسمي الصنف";$("nameEn").value=x.nameEn||"";$("nameAr").value=x.nameAr||x.name||"";$("nameEn").disabled=false;$("nameAr").disabled=false;$("unit").value=x.unit;$("unit").disabled=true;["quantity","price","supplier","expiry","notes"].forEach(id=>$(id).disabled=true);$("similar").hidden=true;showModal()};
 window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+primaryName(x);$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=true;$("nameAr").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("price").value=weighted(x).toFixed(2);$("supplier").value="";$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
-window.editItem=id=>{let x=data.find(x=>x.id===id);editId=id;addingMode="edit";$("modalTitle").textContent="تعديل بيانات الصنف";$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=false;$("nameAr").disabled=false;$("unit").value=x.unit;$("unit").disabled=false;$("quantity").value="";$("price").value="";$("supplier").value=x.supplier||"";$("expiry").value="";$("notes").value=x.notes||"";$("qtyLabel").textContent="لا تغيّر رصيد الصنف هنا";showModal()};
 window.historyItem=id=>{let x=data.find(x=>x.id===id);alert("حركة الصنف: "+x.name+"\n"+x.batches.map(b=>`${b.type}: ${b.qty} ${x.unit} | ${b.price} ج.م | ${b.date} | المورد: ${b.supplier||"—"} | الصلاحية: ${b.expiry||"—"}`).join("\n")||"لا توجد حركات مسجلة")};
 document.querySelectorAll("[data-warehouse]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-warehouse]").forEach(z=>z.classList.remove("active"));b.classList.add("active");current=b.dataset.warehouse;$("search").value="";render()});
 document.querySelectorAll("[data-main]").forEach(b=>b.onclick=()=>{
