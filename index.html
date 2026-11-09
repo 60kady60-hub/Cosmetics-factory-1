@@ -153,7 +153,7 @@ function updateExpiryTicker(){
  const ticker=$("expiryTicker"),track=$("expiryTickerTrack");
  if(!ticker||!track)return;
  if(!alerts.length){ticker.hidden=true;track.innerHTML="";return;}
- const content=alerts.map(({item,status})=>'<span class="expiry-alert '+(status==="stock-expired"?"expired":"near")+'">'+(status==="stock-expired"?" — منتهي الصلاحية":" — أوشكت الصلاحية على الانتهاء")+esc(primaryName(item))+(secondaryName(item)?" — "+esc(secondaryName(item)):"")+'</span>').join("");
+ const content=alerts.map(({item,status})=>'<span class="expiry-alert '+(status==="stock-expired"?"expired":"near")+'"><b dir="auto">'+esc(primaryName(item))+(secondaryName(item)?" — "+esc(secondaryName(item)):"")+'</b><span>'+(status==="stock-expired"?" — منتهي الصلاحية":" — أوشكت الصلاحية على الانتهاء")+'</span></span>').join("");
  track.innerHTML='<div class="expiry-ticker-group">'+content+'</div><div class="expiry-ticker-group" aria-hidden="true">'+content+'</div>';
  ticker.hidden=false;
 }
