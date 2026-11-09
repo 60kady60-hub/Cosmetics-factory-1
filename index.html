@@ -134,7 +134,7 @@ function expiryStatus(item){
 }
 window.toggleItemDetails=id=>{if(typeof longPressFired!=="undefined"&&longPressFired){longPressFired=false;return;}expandedItemId=String(expandedItemId)===String(id)?null:id;render();};
 function render(){
- const list=items(), term=$("search").value.trim().toLowerCase();
+ const list=items().slice().sort((a,b)=>primaryName(a).localeCompare(primaryName(b),"en",{sensitivity:"base",numeric:true})||String(a.id).localeCompare(String(b.id))), term=$("search").value.trim().toLowerCase();
  const filtered=list.filter(x=>(primaryName(x)+" "+secondaryName(x)+" "+(x.supplier||"")+" "+x.batches.map(b=>b.supplier||"").join(" ")).toLowerCase().includes(term));
  $("rows").innerHTML=filtered.length?filtered.map(x=>{
   const q=x.batches.reduce((s,b)=>s+Number(b.qty),0);
