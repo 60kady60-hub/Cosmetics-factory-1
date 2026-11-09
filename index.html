@@ -86,8 +86,8 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 <h2 id="modalTitle">إضافة صنف</h2>
 <form id="itemForm" novalidate>
 <div class="formgrid">
- <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" autocomplete="off" placeholder="Example: Glycerin"></div>
- <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" autocomplete="off" placeholder="مثال: جلسرين"></div>
+ <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" autocomplete="off" placeholder="Example: Glycerin" pattern="[A-Za-z]+([ '-][A-Za-z]+)*" title="اكتب حروفًا إنجليزية فقط"></div>
+ <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" autocomplete="off" placeholder="مثال: جلسرين" title="اكتب حروفًا عربية فقط"></div>
  <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
  <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
  <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0" step="0.01" required value=""></div>
@@ -313,5 +313,19 @@ if(localStorage.getItem(STORAGE_KEY)!==null){setSaveStatus("✓ تم تحميل 
 else{setSaveStatus("لا توجد بيانات محفوظة بعد. أي إضافة أو تعديل سيتم حفظه تلقائيًا.");}
 render();
 </script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}</script>
+<script>
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{
+  if(!sessionStorage.getItem("cosmetics_app_reloaded_v8")){
+   sessionStorage.setItem("cosmetics_app_reloaded_v8","1");
+   location.reload();
+  }
+ });
+ window.addEventListener("load",()=>{
+  navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"})
+   .then(reg=>reg.update())
+   .catch(()=>{});
+ });
+}
+</script>
 </body></html>
