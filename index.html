@@ -26,7 +26,7 @@ main{max-width:1100px;margin:auto;padding:16px}
 .metric small{color:var(--muted);display:block;margin-bottom:7px}.metric strong{font-size:20px;color:var(--green)}
 .toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:14px 0;position:relative;padding-left:42px}
 button.primary{background:var(--green);color:#fff;border:0;border-radius:11px;padding:12px 16px;font-weight:700;cursor:pointer}
-.toolbar-actions{display:flex;align-items:center;gap:8px}.guide-bell{position:absolute;left:0;top:50%;transform:translateY(-50%);width:30px;height:30px;border:1px solid #b9c9c1;border-radius:50%;background:#fff;color:var(--green);font-size:15px;font-weight:600;line-height:1;display:grid;place-items:center;cursor:pointer;opacity:.58;padding:0}.guide-bell:active{transform:translateY(-50%) scale(.96);opacity:.85}
+.toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.toolbar-summary{display:flex;align-items:stretch;gap:8px}.toolbar-summary .metric{padding:8px 11px;min-width:112px}.toolbar-summary .metric small{font-size:11px;margin-bottom:3px;white-space:nowrap}.toolbar-summary .metric strong{font-size:16px;white-space:nowrap}.guide-bell{position:absolute;left:0;top:50%;transform:translateY(-50%);width:30px;height:30px;border:1px solid #b9c9c1;border-radius:50%;background:#fff;color:var(--green);font-size:15px;font-weight:600;line-height:1;display:grid;place-items:center;cursor:pointer;opacity:.58;padding:0}.guide-bell:active{transform:translateY(-50%) scale(.96);opacity:.85}
 button.secondary{background:white;color:var(--green);border:1px solid var(--line);border-radius:11px;padding:11px 14px;cursor:pointer}
 input,select,textarea{font:inherit;border:1px solid #cfdad3;border-radius:10px;padding:11px;background:white;width:100%;min-width:0}
 .search{max-width:310px}
@@ -56,7 +56,7 @@ table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 10p
 @media(prefers-reduced-motion:reduce){.expiry-ticker-track{animation:none;flex-wrap:wrap;width:auto}.expiry-ticker-group[aria-hidden=true]{display:none}}
 @media(max-width:600px){.expiry-ticker{align-items:flex-start;gap:7px;padding:9px}.expiry-ticker-heading{font-size:11px}.expiry-alert{font-size:12px}}
 small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-size:12px;padding:22px}body{padding-bottom:54px}.save-status{position:fixed;z-index:20;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));font-size:12px;text-align:center;color:var(--green);box-shadow:0 -2px 8px #0000000a}.save-status.error{color:#a32121;background:#fff5f5}.backup-panel{display:grid;gap:14px}.backup-actions{display:flex;gap:10px;flex-wrap:wrap}.backup-help{font-size:13px;line-height:1.8;color:var(--muted)}
-@media(max-width:600px){.summary{grid-template-columns:1fr 1fr}.summary .metric:last-child{grid-column:1/-1}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}main{padding:12px}.toolbar{align-items:stretch}.guide-bell{top:6px;transform:none}.guide-bell:active{transform:scale(.96)}.search{max-width:none}}
+@media(max-width:600px){.toolbar{align-items:stretch;gap:10px}.toolbar-actions{padding-left:38px}.toolbar-summary{flex:1;min-width:0}.toolbar-summary .metric{flex:1;min-width:0;padding:8px 7px}.toolbar-summary .metric small{font-size:10px;white-space:normal}.toolbar-summary .metric strong{font-size:14px}.guide-bell{top:6px;transform:none}.guide-bell:active{transform:scale(.96)}.search{max-width:none}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}main{padding:12px}}
 </style>
 </head>
 <body>
@@ -72,17 +72,14 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 <main>
 <div id="app">
  <div id="expiryTicker" class="expiry-ticker" hidden role="status" aria-live="polite"><div class="expiry-ticker-window"><div id="expiryTickerTrack" class="expiry-ticker-track"></div></div></div>
- <div class="summary">
-  <div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div>
-  <div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div>
- </div>
+
  <div class="subnav" id="warehouseNav">
   <button class="tab active" data-warehouse="raw">🧪 المواد الخام</button>
   <button class="tab" data-warehouse="pack">📦 التعبئة والتغليف</button>
   <button class="tab" data-warehouse="equipment">🛠️ المعدات</button>
   <button class="tab" data-warehouse="finished">🧴 المنتجات النهائية</button>
  </div>
- <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إضافة صنف جديد</button><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">i</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
+ <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إضافة صنف جديد</button><div class="toolbar-summary" aria-label="ملخص المخزون"><div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div><div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div></div><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">i</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
  <div class="tablewrap"><table><thead><tr><th>اسم الصنف</th><th>الوحدة</th><th>الرصيد الإجمالي</th><th>متوسط سعر الوحدة</th><th>إضافة كمية</th></tr></thead><tbody id="rows"></tbody></table></div>
  <p class="muted" style="font-size:12px;margin-top:10px">ملاحظة: قيمة المخزون ومتوسط السعر تقديريان على أساس متوسط تكلفة الشراء المرجح. المعدات تُسجّل كأصول/عدد ولا تدخل تلقائياً في تكلفة الخامات.</p>
 </div>
