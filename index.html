@@ -86,7 +86,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 <h2 id="modalTitle">إضافة صنف</h2>
 <form id="itemForm" novalidate>
 <div class="formgrid">
- <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" autocomplete="off" placeholder="Example: Glycerin" pattern="[A-Za-z]+([ '-][A-Za-z]+)*" title="اكتب حروفًا إنجليزية فقط"></div>
+ <div class="field"><label>اسم الصنف بالإنجليزي *</label><input id="nameEn" required maxlength="90" dir="ltr" autocomplete="off" placeholder="Example: Glycerin 99.5%" pattern="[A-Za-z0-9][A-Za-z0-9 .,'()/%&+_:#-]*" title="اكتب الاسم بالإنجليزية، ويمكن استخدام الأرقام والرموز المعتادة"></div>
  <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" autocomplete="off" placeholder="مثال: جلسرين" title="اكتب حروفًا عربية فقط"></div>
  <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
  <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
@@ -211,7 +211,7 @@ $("search").oninput=render;
 function similarNames(names,except){const candidates=names.map(normalizedName).filter(Boolean);return data.filter(x=>x.warehouse===current&&x.id!==except&&[x.nameEn,x.nameAr,x.name].some(v=>candidates.includes(normalizedName(v)))).slice(0,5)}
 function lev(a,b){let d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
 ["nameEn","nameAr"].forEach(id=>$(id).addEventListener("input",()=>{let m=similarNames([$("nameEn").value,$("nameAr").value],editId);$("similar").hidden=!m.length;$("similar").textContent=m.length?"تنبيه: أحد الاسمين مسجل بالفعل في: "+m.map(x=>primaryName(x)+" / "+secondaryName(x)).join("، ")+". لا يمكن حفظ اسم مكرر.":""}));
-function validEnglishName(value){return /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/.test(String(value||"").trim());}
+function validEnglishName(value){const v=String(value||"").trim();return /[A-Za-z]/.test(v)&&/^[A-Za-z0-9][A-Za-z0-9 .,'()/%&+_:#-]*$/.test(v);}
 function validArabicName(value){return /^[\u0621-\u064A\u066E-\u06D3\u0750-\u077F\u064B-\u065F\u0670 ]+$/u.test(String(value||"").trim());}
 function localTodayISO(){
  const d=new Date();
