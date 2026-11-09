@@ -67,7 +67,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
  <button class="tab" data-main="purchases" draggable="true">🛒 المشتريات</button>
  <button class="tab" data-main="sales" draggable="true">💰 المبيعات</button>
  <button class="tab" data-main="reports" draggable="true">📊 التقارير</button>
- <button class="tab" data-main="backup" draggable="true">🗂️ نسخ احتياطي</button>
+ 
 </nav>
 <main>
 <div id="app">
@@ -91,7 +91,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
  <p class="backup-help">الحفظ التلقائي يعمل داخل المتصفح على نفس الجهاز. لو فتحت نسخة البرنامج من مسار أو متصفح مختلف، استورد ملف JSON لاسترجاع بياناتك.</p>
 </section>
 </main>
-<footer>البيانات تُحفظ تلقائيًا في ذاكرة المتصفح على هذا الجهاز. احتفظ بنسخة JSON احتياطية بشكل دوري.</footer>
+<footer>البيانات تُحفظ تلقائيًا في ذاكرة المتصفح على هذا الجهاز.</footer>
 <div id="saveStatus" class="save-status" role="status" aria-live="polite">جارٍ فحص بيانات الحفظ...</div>
 <div class="modal" id="guideModal" role="dialog" aria-modal="true" aria-labelledby="guideTitle"><div class="dialog" style="max-width:430px"><h2 id="guideTitle">إرشادات تسجيل الأصناف</h2><p style="font-size:14px;line-height:1.9;color:var(--text);margin:0 0 16px">ابدأ بإدخال الرصيد الافتتاحي لكل صنف مرة واحدة. بعد ذلك سجّل أي زيادة من خلال «إضافة كمية» حتى يحتفظ البرنامج بتاريخ كل دفعة وسعرها وموردها وصلاحيتها.</p><div class="formactions"><button class="primary" type="button" id="closeGuide">حسنًا</button></div></div></div>
 <div class="modal" id="deleteModal"><div class="dialog" style="max-width:360px"><h2 id="deleteTitle">إدارة الصنف</h2><p id="deleteMessage" style="color:var(--muted);font-size:14px">هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟</p><div class="formactions"><button class="primary" type="button" id="confirmDelete" style="background:#a83232">حذف الصنف</button><button class="secondary" type="button" id="cancelDelete">تراجع</button></div></div></div>
@@ -122,7 +122,7 @@ try{const stored=localStorage.getItem(STORAGE_KEY);data=stored?JSON.parse(stored
 data.forEach(x=>{if(!x.nameAr)x.nameAr=x.name||"";if(!x.nameEn)x.nameEn="";});
 let current="raw", editId=null, addingMode="new";
 function setSaveStatus(message,isError=false){const el=$("saveStatus");if(!el)return;el.textContent=message;el.classList.toggle("error",!!isError);}
-function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));const now=new Date();setSaveStatus("✓ تم الحفظ تلقائيًا — آخر حفظ: "+now.toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));return true;}catch(err){setSaveStatus("⚠️ تعذّر الحفظ على الهاتف. صدّر نسخة JSON فورًا.",true);return false;}}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));const now=new Date();setSaveStatus("✓ تم الحفظ تلقائيًا — آخر حفظ: "+now.toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));return true;}catch(err){setSaveStatus("⚠️ تعذّر الحفظ على الهاتف. راجع مساحة التخزين.",true);return false;}}
 const money=n=>(Number(n)||0).toLocaleString("ar-EG",{minimumFractionDigits:2,maximumFractionDigits:2});
 function items(){return data.filter(x=>x.warehouse===current)}
 function primaryName(x){return x.nameEn||x.name||x.nameAr||""}
