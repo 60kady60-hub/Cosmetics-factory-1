@@ -74,7 +74,6 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
  <div id="expiryTicker" class="expiry-ticker" hidden role="status" aria-live="polite"><div class="expiry-ticker-window"><div id="expiryTickerTrack" class="expiry-ticker-track"></div></div></div>
  <div class="summary">
   <div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div>
-  <div class="metric"><small>إجمالي الكميات (كل صنف بوحدته)</small><strong id="qty">0</strong></div>
   <div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div>
  </div>
  <div class="subnav" id="warehouseNav">
@@ -176,7 +175,6 @@ function render(){
   return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف"><span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)?'<small style="display:block;color:var(--muted);font-weight:400">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
  }).join(""):'<tr><td colspan="5" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
  $("count").textContent=list.length.toLocaleString("en-US");
- $("qty").textContent=list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty),0),0).toLocaleString("en-US",{maximumFractionDigits:2});
  $("value").textContent=money(list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty)*Number(b.price),0),0))+" ج.م";
  updateExpiryTicker();
 }
