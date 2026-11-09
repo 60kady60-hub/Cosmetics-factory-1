@@ -314,6 +314,7 @@ else{setSaveStatus("لا توجد بيانات محفوظة بعد. أي إضا�
 render();
 </script>
 <script>
+if(sessionStorage.getItem("cosmetics_app_reloaded_v8"))sessionStorage.removeItem("cosmetics_app_reloaded_v8");
 if("serviceWorker" in navigator){
  navigator.serviceWorker.addEventListener("controllerchange",()=>{
   if(!sessionStorage.getItem("cosmetics_app_reloaded_v8")){
