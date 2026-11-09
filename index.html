@@ -90,7 +90,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
  <div class="field"><label>اسم الصنف بالعربي *</label><input id="nameAr" required maxlength="90" autocomplete="off" placeholder="مثال: جلسرين" title="اكتب حروفًا عربية فقط"></div>
  <div class="field"><label>وحدة القياس *</label><select id="unit"><option>كيلو</option><option>جرام</option><option>لتر</option><option>مللي</option><option>قطعة</option><option>عدد</option><option>عبوة</option><option>كرتونة</option><option>متر</option><option>أخرى</option></select></div>
  <div class="field"><label id="qtyLabel">الرصيد الافتتاحي *</label><input id="quantity" type="number" min="0.001" step="0.001" required value=""></div>
- <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0" step="0.01" required value=""></div>
+ <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0.01" step="0.01" required value=""></div>
  <div class="field"><label>الشركة / المورد *</label><input id="supplier" required placeholder="اسم المورد"></div>
  <div class="field"><label>تاريخ الصلاحية *</label><input id="expiry" type="date" required></div>
  <div class="field full"><label>ملاحظات</label><textarea id="notes" rows="2" placeholder="اختياري"></textarea></div>
@@ -246,7 +246,7 @@ $("itemForm").onsubmit=e=>{e.preventDefault();
    ["nameEn",nameEn,"من فضلك اكتب اسم الصنف بالإنجليزي."],
    ["nameAr",nameAr,"من فضلك اكتب اسم الصنف بالعربي."],
    ["quantity",$("quantity").value && Number($("quantity").value)>0,"من فضلك أدخل كمية صحيحة أكبر من صفر."],
-   ["price",$("price").value!=="" && Number($("price").value)>=0,"من فضلك أدخل سعر الوحدة."],
+   ["price",$("price").value!=="" && Number.isFinite(Number($("price").value)) && Number($("price").value)>0,"سعر الوحدة يجب أن يكون أكبر من صفر."],
    ["supplier",$("supplier").value.trim(),"من فضلك اكتب اسم الشركة أو المورد."],
    ["expiry",$("expiry").value,"من فضلك أدخل تاريخ الصلاحية."]
  ];
