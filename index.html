@@ -227,18 +227,18 @@ $('confirmDelete').onclick=()=>{
   (issue.allocations||[]).forEach(a=>{let batch=(x.batches||[]).find(b=>String(b.id)===String(a.batchId));if(batch){batch.qty=Number(batch.qty||0)+Number(a.qty||0);}else{x.batches.push({...a.batchSnapshot,id:a.batchId,qty:Number(a.qty||0)});}});
   issue.cancelled=true;issue.cancelledAt=localTodayISO();
   if(!save()){data=JSON.parse(previous);closeDeleteOptions();render();alert('تعذّر حفظ إلغاء إذن الصرف؛ لم يتم اعتماد الإلغاء.');return;}
-  const code=issue.code;closeDeleteOptions();render();alert('تم إلغاء إذن الصرف '+code+' وإرجاع الكميات إلى الدفعات الأصلية.');return;
+  const code=issue.code;movementChoiceItemId=id;movementView='issue';closeDeleteOptions();render();alert('تم إلغاء إذن الصرف '+code+' وإرجاع الكميات إلى الدفعات الأصلية.');return;
  }
  if(pendingDeleteBatch!==null){
   const batchIndex=pendingDeleteBatch,x=data[index];
   if(!x.batches[batchIndex]){closeDeleteOptions();alert('لم يتم العثور على الحركة المطلوبة. حدّث الصفحة وحاول مرة أخرى.');return;}
   const batch=x.batches[batchIndex];x.batches.splice(batchIndex,1);const itemName=primaryName(x);expandedItemId=id;
-  const saved=save();closeDeleteOptions();render();
+  movementChoiceItemId=id;movementView='add';const saved=save();closeDeleteOptions();render();
   if(saved)alert('تم حذف حركة الإضافة من الصنف «'+itemName+'» بنجاح، مع الاحتفاظ بباقي الحركات.');
   else alert('تم حذف الحركة من الشاشة، لكن تعذّر تأكيد حفظها على الجهاز. راجع حالة الحفظ أسفل الصفحة.');
   return;
  }
- const dataName=primaryName(data[index]);data.splice(index,1);if(String(expandedItemId)===id)expandedItemId=null;const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}
+ const dataName=primaryName(data[index]);data.splice(index,1);if(String(expandedItemId)===id)expandedItemId=null;if(String(movementChoiceItemId)===id){movementChoiceItemId=null;movementView=null;}const saved=save();closeDeleteOptions();render();if(saved){alert('تم حذف الصنف «'+dataName+'» بنجاح وحفظ التعديل.');}else{alert('تم حذف الصنف «'+dataName+'» من الشاشة، لكن تعذّر تأكيد حفظه على الجهاز. راجع حالة الحفظ أسفل الصفحة.');}
 };
 function cancelRowPress(){if(longPressTimer!==null){clearTimeout(longPressTimer);longPressTimer=null;}}
 function getRowAction(target){
