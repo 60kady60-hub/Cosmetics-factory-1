@@ -57,6 +57,18 @@ table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:12px 10p
 @media(max-width:600px){.expiry-ticker{align-items:flex-start;gap:7px;padding:9px}.expiry-ticker-heading{font-size:11px}.expiry-alert{font-size:12px}}
 small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-size:12px;padding:22px}body{padding-bottom:54px}.save-status{position:fixed;z-index:20;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));font-size:12px;text-align:center;color:var(--green);box-shadow:0 -2px 8px #0000000a}.save-status.error{color:#a32121;background:#fff5f5}.backup-panel{display:grid;gap:14px}.backup-actions{display:flex;gap:10px;flex-wrap:wrap}.backup-help{font-size:13px;line-height:1.8;color:var(--muted)}
 @media(max-width:600px){.toolbar{align-items:stretch;gap:10px}.toolbar-actions{padding-left:38px}.toolbar-summary{flex:1;min-width:0}.toolbar-summary .metric{flex:1;min-width:0;padding:8px 7px}.toolbar-summary .metric small{font-size:10px;white-space:normal}.toolbar-summary .metric strong{font-size:14px}.guide-bell{top:6px;transform:none}.guide-bell:active{transform:scale(.96)}.search{max-width:none}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}main{padding:12px}}
+
+/* Stock issue additions: isolated styles, preserving the existing interface. */
+.stock-row-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stock-row-actions button{white-space:nowrap}
+.issue-stock-hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.7}
+.issue-history{display:grid;gap:8px;margin-top:12px}
+.issue-history>strong{color:var(--green)}
+.issue-history table,.issue-log-table{min-width:850px}
+.issue-cancelled td{color:#7b8580;background:#f4f6f5}
+.issue-cancelled .issue-state{color:#a32121;font-weight:700}
+.issue-reason{white-space:normal;min-width:150px;max-width:260px}
+@media(max-width:600px){.stock-row-actions{align-items:stretch}.stock-row-actions button{font-size:11px;padding:7px 8px}}
 </style>
 </head>
 <body>
@@ -79,7 +91,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
   <button class="tab" data-warehouse="equipment">🛠️ المعدات</button>
   <button class="tab" data-warehouse="finished">🧴 المنتجات النهائية</button>
  </div>
- <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إذن إضافة</button><button class="secondary" id="issueOut" type="button">إذن صرف</button><div class="toolbar-summary" aria-label="ملخص المخزون"><div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div><div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div></div><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">i</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
+ <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إذن إضافة</button><button class="secondary" id="issueOut" type="button">إذن صرف</button><button class="secondary" id="issueLogOpen" type="button">سجل أذون الصرف</button><div class="toolbar-summary" aria-label="ملخص المخزون"><div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div><div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div></div><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">i</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
  <div class="tablewrap"><table><thead><tr><th>اسم الصنف</th><th>الوحدة</th><th>الرصيد الإجمالي</th><th>متوسط سعر الوحدة</th><th>إضافة كمية</th></tr></thead><tbody id="rows"></tbody></table></div>
  <p class="muted" style="font-size:12px;margin-top:10px">ملاحظة: قيمة المخزون ومتوسط السعر تقديريان على أساس متوسط تكلفة الشراء المرجح. المعدات تُسجّل كأصول/عدد ولا تدخل تلقائياً في تكلفة الخامات.</p>
 </div>
@@ -113,6 +125,31 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 <div id="expiryError" role="alert" aria-live="assertive" hidden style="margin:12px 0;padding:12px;border:1px solid #c62828;border-radius:10px;background:#fff0f0;color:#9b1c1c;font-weight:700"></div>
 <div class="formactions"><button class="primary" type="submit">حفظ الصنف</button><button class="secondary" type="button" id="cancel">إلغاء</button></div>
 </form></div></div>
+<div class="modal" id="issueModal" role="dialog" aria-modal="true" aria-labelledby="issueTitle">
+ <div class="dialog">
+  <h2 id="issueTitle">إذن صرف خامات</h2>
+  <form id="issueForm" novalidate>
+   <div class="formgrid">
+    <div class="field full"><label for="issueItemSearch">اسم الصنف *</label><input id="issueItemSearch" list="issueItemOptions" autocomplete="off" placeholder="اكتب حرفًا أو أكثر للبحث في أصناف المخزن"><datalist id="issueItemOptions"></datalist><div class="issue-stock-hint" id="issueStockInfo">اختر صنفًا مسجلًا في المخزن لعرض رصيده المتاح.</div></div>
+    <div class="field"><label for="issueQty">كمية الصرف *</label><input id="issueQty" type="number" min="0.001" step="0.001" placeholder="الكمية المطلوب صرفها"></div>
+    <div class="field"><label for="issueUnit">وحدة القياس</label><input id="issueUnit" readonly placeholder="تظهر بعد اختيار الصنف"></div>
+    <div class="field"><label for="issueDate">تاريخ الصرف</label><input id="issueDate" type="date" readonly></div>
+    <div class="field"><label for="issueDepartment">القسم المستلم *</label><select id="issueDepartment"><option value="">اختر القسم</option><option>الإنتاج</option><option>التصنيع</option><option>الجودة</option><option>الصيانة</option><option>البحث والتطوير</option><option value="أخرى">أخرى</option></select></div>
+    <div class="field full" id="issueOtherDepartmentWrap" hidden><label for="issueOtherDepartment">اسم القسم *</label><input id="issueOtherDepartment" maxlength="80" placeholder="اكتب اسم القسم"></div>
+    <div class="field full"><label for="issueReason">سبب الصرف *</label><textarea id="issueReason" rows="3" maxlength="500" placeholder="اكتب سبب صرف الخامة"></textarea></div>
+   </div>
+   <div id="issueError" role="alert" aria-live="assertive" hidden style="margin:12px 0;padding:12px;border:1px solid #c62828;border-radius:10px;background:#fff0f0;color:#9b1c1c;font-weight:700"></div>
+   <div class="formactions"><button class="primary" type="submit">تأكيد الصرف</button><button class="secondary" type="button" id="cancelIssue">إلغاء</button></div>
+  </form>
+ </div>
+</div>
+<div class="modal" id="issueLogModal" role="dialog" aria-modal="true" aria-labelledby="issueLogTitle">
+ <div class="dialog" style="width:min(960px,100%)">
+  <h2 id="issueLogTitle">سجل أذون الصرف</h2>
+  <div class="tablewrap"><table class="issue-log-table"><thead><tr><th>رقم الإذن</th><th>الصنف</th><th>المخزن</th><th>التاريخ</th><th>الكمية</th><th>القسم المستلم</th><th>سبب الصرف</th><th>الحالة</th></tr></thead><tbody id="issueLogRows"></tbody></table></div>
+  <div class="formactions"><button class="secondary" type="button" id="closeIssueLog">إغلاق</button></div>
+ </div>
+</div>
 <script>
 const labels={raw:"المواد الخام",pack:"التعبئة والتغليف",equipment:"المعدات",finished:"المنتجات النهائية"};
 const $=id=>document.getElementById(id);
@@ -169,21 +206,32 @@ function render(){
   const expanded=String(expandedItemId)===String(x.id);
   const statusClass=rowStockStatus(x);
   const detailRows=x.batches.length?x.batches.map((b,i)=>'<tr data-batch-index="'+i+'"><td>'+(i+1)+'</td><td>'+esc(b.type||"إضافة كمية")+'</td><td>'+Number(b.qty).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+money(b.price)+' ج.م</td><td>'+esc(b.date||"—")+'</td><td>'+esc(b.supplier||"—")+'</td><td>'+esc(b.expiry||"—")+'</td></tr>').join(""):'<tr><td colspan="7" class="empty">لا توجد كميات مضافة لهذا الصنف حتى الآن.</td></tr>';
-  return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف"><span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)?'<small style="display:block;color:var(--muted);font-weight:400">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div></div></td></tr>':'');
+  const issueEntries=(x.issues||[]).map((issue,index)=>({issue,index})).sort((a,b)=>String(b.issue.date||"").localeCompare(String(a.issue.date||""))||String(b.issue.code||"").localeCompare(String(a.issue.code||"")));
+  const issueTable=issueEntries.length?'<div class="issue-history"><strong>كل حركات الصرف للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>رقم الإذن</th><th>تاريخ الصرف</th><th>الكمية</th><th>القسم المستلم</th><th>سبب الصرف</th><th>تفاصيل الدفعات والصلاحية</th><th>الحالة</th></tr></thead><tbody>'+issueEntries.map(({issue,index})=>'<tr data-issue-index="'+index+'" class="'+(issue.cancelled?'issue-cancelled':'')+'"><td>'+esc(issue.code||"—")+'</td><td>'+esc(issue.date||"—")+'</td><td>'+Number(issue.qty||0).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(x.unit)+'</td><td>'+esc(issue.department||"—")+'</td><td class="issue-reason">'+esc(issue.reason||"—")+'</td><td>'+esc((issue.allocations||[]).map(a=>Number(a.qty||0).toLocaleString("en-US",{maximumFractionDigits:3})+' '+x.unit+' (صلاحية: '+(a.expiry||"—")+')').join("، ")||"—")+'</td><td class="issue-state">'+(issue.cancelled?'ملغي — تم رد الكمية':'تم الصرف')+'</td></tr>').join("")+'</tbody></table></div><small class="muted">لإلغاء إذن صرف: اضغط ضغطة مطوّلة على الحركة ثم أكّد الإلغاء.</small></div>':'';
+  return '<tr class="'+statusClass+'"><td><button class="item-name" type="button" data-item-id="'+x.id+'" onclick="toggleItemDetails(\''+x.id+'\')" aria-expanded="'+expanded+'" title="اضغط لعرض كل إضافات الصنف، واضغط مطولاً للحذف"><span style="display:block;font-weight:800" dir="auto">'+esc(primaryName(x))+'</span>'+(secondaryName(x)?'<small style="display:block;color:var(--muted);font-weight:400">'+esc(secondaryName(x))+'</small>':'')+(expanded?"▴":"▾")+'</button></td><td>'+esc(x.unit)+'</td><td>'+q.toLocaleString("en-US",{maximumFractionDigits:3})+'</td><td>'+money(weighted(x))+' ج.م</td><td><div class="stock-row-actions"><button class="primary" type="button" onclick="addBatch(\''+x.id+'\')">＋ إضافة كمية جديدة</button><button class="secondary" type="button" onclick="issueItem(\''+x.id+'\')">− صرف كمية جديدة</button></div></td></tr>'+(expanded?'<tr class="batch-details '+statusClass+'" data-item-id="'+x.id+'"><td colspan="5"><div class="batch-details-inner"><strong>كل حركات الإضافة للصنف: '+esc(primaryName(x))+'</strong><div class="tablewrap"><table><thead><tr><th>#</th><th>نوع الحركة</th><th>الكمية</th><th>سعر الوحدة</th><th>تاريخ الإضافة</th><th>اسم المورد</th><th>تاريخ الصلاحية</th></tr></thead><tbody>'+detailRows+'</tbody></table></div>'+issueTable+'</div></td></tr>':'');
  }).join(""):'<tr><td colspan="5" class="empty">لا توجد أصناف هنا بعد. اضغط «إضافة صنف جديد» للبدء.</td></tr>';
  $("count").textContent=list.length.toLocaleString("en-US");
  $("value").textContent=money(list.reduce((s,x)=>s+x.batches.reduce((a,b)=>a+Number(b.qty)*Number(b.price),0),0))+" ج.م";
  updateExpiryTicker();
 }
-let pendingDeleteId=null,pendingDeleteBatch=null,longPressTimer=null,longPressFired=false;
-function openDeleteOptions(id){const x=data.find(z=>String(z.id)===String(id));if(!x)return;pendingDeleteId=id;pendingDeleteBatch=null;$('deleteTitle').textContent='حذف الصنف: '+primaryName(x);$('deleteMessage').textContent='هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟';$('confirmDelete').textContent='حذف الصنف';$('deleteModal').classList.add('show');}
-function openDeleteBatchOptions(itemId,batchIndex){const x=data.find(z=>String(z.id)===String(itemId));if(!x||!x.batches[batchIndex])return;pendingDeleteId=itemId;pendingDeleteBatch=batchIndex;$('deleteTitle').textContent='حذف حركة من: '+primaryName(x);$('deleteMessage').textContent='هل تريد حذف حركة الإضافة رقم '+(batchIndex+1)+' فقط؟ باقي الحركات والصنف سيظلان كما هما.';$('confirmDelete').textContent='حذف الحركة';$('deleteModal').classList.add('show');}
-function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;pendingDeleteBatch=null;$('confirmDelete').textContent='حذف الصنف';}
+let pendingDeleteId=null,pendingDeleteBatch=null,pendingDeleteIssue=null,longPressTimer=null,longPressFired=false;
+function openDeleteOptions(id){const x=data.find(z=>String(z.id)===String(id));if(!x)return;pendingDeleteId=id;pendingDeleteBatch=null;pendingDeleteIssue=null;$('deleteTitle').textContent='حذف الصنف: '+primaryName(x);$('deleteMessage').textContent='هل تريد حذف هذا الصنف بكل دفعاته وحركاته؟';$('confirmDelete').textContent='حذف الصنف';$('deleteModal').classList.add('show');}
+function openDeleteBatchOptions(itemId,batchIndex){const x=data.find(z=>String(z.id)===String(itemId));if(!x||!x.batches[batchIndex])return;pendingDeleteId=itemId;pendingDeleteBatch=batchIndex;pendingDeleteIssue=null;$('deleteTitle').textContent='حذف حركة من: '+primaryName(x);$('deleteMessage').textContent='هل تريد حذف حركة الإضافة رقم '+(batchIndex+1)+' فقط؟ باقي الحركات والصنف سيظلان كما هما.';$('confirmDelete').textContent='حذف الحركة';$('deleteModal').classList.add('show');}
+function closeDeleteOptions(){$('deleteModal').classList.remove('show');pendingDeleteId=null;pendingDeleteBatch=null;pendingDeleteIssue=null;$('confirmDelete').textContent='حذف الصنف';}
 $('cancelDelete').onclick=closeDeleteOptions;
 $('confirmDelete').onclick=()=>{
  if(pendingDeleteId===null||pendingDeleteId===undefined)return;
  const id=String(pendingDeleteId),index=data.findIndex(z=>String(z.id)===id);
  if(index<0){closeDeleteOptions();alert('لم يتم العثور على الصنف المطلوب. حدّث الصفحة وحاول مرة أخرى.');return;}
+ if(pendingDeleteIssue!==null){
+  const issueIndex=pendingDeleteIssue,x=data[index],issue=(x.issues||[])[issueIndex];
+  if(!issue||issue.cancelled){closeDeleteOptions();alert('إذن الصرف غير موجود أو تم إلغاؤه بالفعل.');return;}
+  const previous=JSON.stringify(data);
+  (issue.allocations||[]).forEach(a=>{let batch=(x.batches||[]).find(b=>String(b.id)===String(a.batchId));if(batch){batch.qty=Number(batch.qty||0)+Number(a.qty||0);}else{x.batches.push({...a.batchSnapshot,id:a.batchId,qty:Number(a.qty||0)});}});
+  issue.cancelled=true;issue.cancelledAt=localTodayISO();
+  if(!save()){data=JSON.parse(previous);closeDeleteOptions();render();alert('تعذّر حفظ إلغاء إذن الصرف؛ لم يتم اعتماد الإلغاء.');return;}
+  const code=issue.code;closeDeleteOptions();render();alert('تم إلغاء إذن الصرف '+code+' وإرجاع الكميات إلى الدفعات الأصلية.');return;
+ }
  if(pendingDeleteBatch!==null){
   const batchIndex=pendingDeleteBatch,x=data[index];
   if(!x.batches[batchIndex]){closeDeleteOptions();alert('لم يتم العثور على الحركة المطلوبة. حدّث الصفحة وحاول مرة أخرى.');return;}
@@ -198,13 +246,16 @@ $('confirmDelete').onclick=()=>{
 function cancelRowPress(){if(longPressTimer!==null){clearTimeout(longPressTimer);longPressTimer=null;}}
 function getRowAction(target){
  if(!(target instanceof Element)||target.closest('.actions'))return null;
+ const issueRow=target.closest('tr[data-issue-index]');
+ if(issueRow){const details=issueRow.closest('tr.batch-details');return {type:'issue',itemId:details?details.dataset.itemId:issueRow.dataset.itemId,index:Number(issueRow.dataset.issueIndex)};}
  const batchRow=target.closest('tr[data-batch-index]');
  if(batchRow){const details=batchRow.closest('tr.batch-details');if(details)return {type:'batch',itemId:details.dataset.itemId,index:Number(batchRow.dataset.batchIndex)};}
  const row=target.closest('tbody#rows tr');if(!row)return null;
  const nameButton=row.querySelector('.item-name[data-item-id]');
  return nameButton?{type:'item',itemId:nameButton.dataset.itemId}:null;
 }
-function openRowDelete(action){if(action.type==='batch')openDeleteBatchOptions(action.itemId,action.index);else openDeleteOptions(action.itemId);}
+function openDeleteIssueOptions(itemId,issueIndex){const x=data.find(z=>String(z.id)===String(itemId)),issue=x&&(x.issues||[])[issueIndex];if(!issue||issue.cancelled)return;pendingDeleteId=itemId;pendingDeleteBatch=null;pendingDeleteIssue=issueIndex;$('deleteTitle').textContent='إلغاء إذن الصرف '+(issue.code||'');$('deleteMessage').textContent='هل تريد إلغاء هذا الإذن؟ سيتم إرجاع الكمية إلى الدفعات الأصلية مع الاحتفاظ بسجل الإذن كحركة ملغاة.';$('confirmDelete').textContent='إلغاء إذن الصرف';$('deleteModal').classList.add('show');}
+function openRowDelete(action){if(action.type==='batch')openDeleteBatchOptions(action.itemId,action.index);else if(action.type==='issue')openDeleteIssueOptions(action.itemId,action.index);else openDeleteOptions(action.itemId);}
 // Touch handling is registered directly for iPhone Safari (not gated on PointerEvent).
 let touchStartX=0,touchStartY=0;
 $('rows').addEventListener('touchstart',e=>{
@@ -236,6 +287,63 @@ function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(
 $("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";$("minStock").value="";$("minStock").disabled=false;showModal()};
 $("guideBell").onclick=()=>$("guideModal").classList.add("show");$("closeGuide").onclick=()=>$("guideModal").classList.remove("show");$("guideModal").addEventListener("click",e=>{if(e.target===$("guideModal"))$("guideModal").classList.remove("show")});
 $("cancel").onclick=closeModal;
+let selectedIssueItemId=null;
+function issueItems(){return data.filter(x=>x.warehouse===current);}
+function findIssueItemById(id){return issueItems().find(x=>String(x.id)===String(id))||null;}
+function updateIssueSuggestions(){
+ const term=$("issueItemSearch").value.trim().toLocaleLowerCase(),list=issueItems().filter(x=>(primaryName(x)+" "+secondaryName(x)).toLocaleLowerCase().includes(term));
+ $("issueItemOptions").innerHTML=list.slice(0,40).map(x=>'<option value="'+esc(primaryName(x))+'"></option>'+(secondaryName(x)&&secondaryName(x)!==primaryName(x)?'<option value="'+esc(secondaryName(x))+'"></option>':"")).join("");
+ const match=issueItems().find(x=>normalizedName(primaryName(x))===normalizedName($("issueItemSearch").value)||normalizedName(secondaryName(x))===normalizedName($("issueItemSearch").value));
+ selectedIssueItemId=match?match.id:null;
+ const info=$("issueStockInfo");
+ if(match){info.textContent="الرصيد المتاح: "+totalStock(match).toLocaleString("en-US",{maximumFractionDigits:3})+" "+match.unit+" — المخزن: "+(labels[match.warehouse]||match.warehouse);}
+ else{info.textContent="اختر صنفًا موجودًا في قائمة المخزن؛ البحث يعرض الأصناف المسجلة فقط.";}
+ $("issueUnit").value=match?match.unit:"";
+}
+function openIssueModal(itemId=null){
+ $("issueForm").reset();$("issueError").hidden=true;$("issueError").textContent="";
+ $("issueDate").value=localTodayISO();$("issueItemSearch").disabled=false;selectedIssueItemId=null;
+ $("issueOtherDepartmentWrap").hidden=true;$("issueOtherDepartment").value="";
+ $("issueItemOptions").innerHTML=issueItems().map(x=>'<option value="'+esc(primaryName(x))+'"></option>'+(secondaryName(x)&&secondaryName(x)!==primaryName(x)?'<option value="'+esc(secondaryName(x))+'"></option>':"")).join("");
+ if(itemId!==null){const item=findIssueItemById(itemId);if(!item)return;selectedIssueItemId=item.id;$("issueItemSearch").value=primaryName(item);$("issueItemSearch").disabled=true;$("issueUnit").value=item.unit;$("issueStockInfo").textContent="الرصيد المتاح: "+totalStock(item).toLocaleString("en-US",{maximumFractionDigits:3})+" "+item.unit+" — "+(labels[item.warehouse]||item.warehouse);}
+ else{$("issueItemSearch").value="";$("issueUnit").value="";$("issueStockInfo").textContent="اكتب حرفًا أو أكثر لعرض الأصناف الموجودة في المخزن الحالي.";}
+ $("issueModal").classList.add("show");if(itemId===null)$("issueItemSearch").focus();
+}
+function closeIssueModal(){$("issueModal").classList.remove("show");$("issueForm").reset();$("issueItemSearch").disabled=false;selectedIssueItemId=null;$("issueError").hidden=true;}
+$("issueOut").onclick=()=>openIssueModal();
+$("cancelIssue").onclick=closeIssueModal;
+$("issueItemSearch").addEventListener("input",updateIssueSuggestions);
+$("issueDepartment").addEventListener("change",()=>{$("issueOtherDepartmentWrap").hidden=$("issueDepartment").value!=="أخرى";});
+window.issueItem=id=>openIssueModal(id);
+function renderIssueLog(){
+ const entries=data.flatMap(item=>(item.issues||[]).map(issue=>({item,issue}))).sort((a,b)=>String(b.issue.date||"").localeCompare(String(a.issue.date||""))||String(b.issue.code||"").localeCompare(String(a.issue.code||"")));
+ $("issueLogRows").innerHTML=entries.length?entries.map(({item,issue})=>'<tr><td>'+esc(issue.code||"—")+'</td><td>'+esc(primaryName(item))+(secondaryName(item)?' — '+esc(secondaryName(item)):"")+'</td><td>'+esc(labels[item.warehouse]||item.warehouse||"—")+'</td><td>'+esc(issue.date||"—")+'</td><td>'+Number(issue.qty||0).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(item.unit)+'</td><td>'+esc(issue.department||"—")+'</td><td class="issue-reason">'+esc(issue.reason||"—")+'</td><td class="issue-state">'+(issue.cancelled?'ملغي — تم رد الكمية':'تم الصرف')+'</td></tr>').join(""):'<tr><td colspan="8" class="empty">لا توجد أذون صرف مسجلة حتى الآن.</td></tr>';
+}
+$("issueLogOpen").onclick=()=>{renderIssueLog();$("issueLogModal").classList.add("show");};
+$("closeIssueLog").onclick=()=>$("issueLogModal").classList.remove("show");
+$("issueLogModal").addEventListener("click",e=>{if(e.target===$("issueLogModal"))$("issueLogModal").classList.remove("show");});
+function nextIssueCode(){
+ let max=0;data.forEach(item=>(item.issues||[]).forEach(issue=>{const m=String(issue.code||"").match(/^SR-(\d+)$/);if(m)max=Math.max(max,Number(m[1]));}));
+ return "SR-"+String(max+1).padStart(4,"0");
+}
+$("issueForm").onsubmit=e=>{
+ e.preventDefault();
+ const item=findIssueItemById(selectedIssueItemId),qtyText=$("issueQty").value,qty=Number(qtyText),department=$("issueDepartment").value==="أخرى"?$("issueOtherDepartment").value.trim():$("issueDepartment").value,reason=$("issueReason").value.trim();
+ const fail=(message,id)=>{$("issueError").textContent=message;$("issueError").hidden=false;if(id)$(id).focus();};$("issueError").hidden=true;
+ if(!item){fail("من فضلك اختر صنفًا موجودًا بالفعل في المخزن.","issueItemSearch");return;}
+ if(qtyText.trim()===""||!Number.isFinite(qty)||qty<=0){fail("كمية الصرف يجب أن تكون أكبر من صفر.","issueQty");return;}
+ const available=totalStock(item);if(qty>available+1e-9){fail("الكمية المطلوبة أكبر من الرصيد المتاح. الرصيد الحالي: "+available+" "+item.unit,"issueQty");return;}
+ if(!$("issueDepartment").value){fail("من فضلك اختر القسم المستلم.","issueDepartment");return;}
+ if($("issueDepartment").value==="أخرى"&&!department){fail("من فضلك اكتب اسم القسم.","issueOtherDepartment");return;}
+ if(!reason){fail("من فضلك اكتب سبب الصرف.","issueReason");return;}
+ const previous=JSON.stringify(data),allocations=[];let toAllocate=qty;
+ const ordered=(item.batches||[]).map((batch,index)=>({batch,index})).filter(x=>Number(x.batch.qty)>0).sort((a,b)=>String(a.batch.date||"").localeCompare(String(b.batch.date||""))||a.index-b.index);
+ for(const entry of ordered){if(toAllocate<=1e-9)break;const batch=entry.batch;if(!batch.id)batch.id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+"-"+entry.index);const take=Math.min(Number(batch.qty),toAllocate);allocations.push({batchId:batch.id,qty:take,expiry:batch.expiry||"",batchSnapshot:{id:batch.id,date:batch.date||"",price:Number(batch.price||0),supplier:batch.supplier||"",expiry:batch.expiry||"",notes:batch.notes||"",type:batch.type||"إضافة كمية"}});batch.qty=Number((Number(batch.qty)-take).toFixed(6));toAllocate-=take;}
+ if(toAllocate>1e-7){data=JSON.parse(previous);fail("تعذّر توزيع الكمية على دفعات المخزون. راجع الرصيد وحاول مرة أخرى.","issueQty");return;}
+ item.issues=item.issues||[];const issue={code:nextIssueCode(),date:localTodayISO(),qty,department,reason,allocations,cancelled:false};item.issues.push(issue);
+ if(!save()){data=JSON.parse(previous);fail("تعذّر حفظ إذن الصرف على الجهاز؛ لم يتم اعتماد الخصم.","issueQty");return;}
+ const code=issue.code;closeIssueModal();render();alert("تم اعتماد إذن الصرف "+code+" وخصم "+qty+" "+item.unit+" من المخزون بنظام FIFO.");
+};
 $("search").oninput=render;
 function similarNames(names,except){const candidates=names.map(normalizedName).filter(Boolean);return data.filter(x=>x.warehouse===current&&x.id!==except&&[x.nameEn,x.nameAr,x.name].some(v=>candidates.includes(normalizedName(v)))).slice(0,5)}
 function lev(a,b){let d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=0;j<=b.length;j++)d[0][j]=j;for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return d[a.length][b.length]}
