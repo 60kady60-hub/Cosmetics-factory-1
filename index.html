@@ -133,7 +133,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
     <div class="field full"><label for="issueItemSearch">اسم الصنف *</label><input id="issueItemSearch" list="issueItemOptions" autocomplete="off" placeholder="اكتب حرفًا أو أكثر للبحث في أصناف المخزن"><datalist id="issueItemOptions"></datalist><div class="issue-stock-hint" id="issueStockInfo">اختر صنفًا مسجلًا في المخزن لعرض رصيده المتاح.</div></div>
     <div class="field"><label for="issueQty">كمية الصرف *</label><input id="issueQty" type="number" min="0.001" step="0.001" placeholder="الكمية المطلوب صرفها"></div>
     <div class="field"><label for="issueUnit">وحدة القياس</label><input id="issueUnit" readonly placeholder="تظهر بعد اختيار الصنف"></div>
-    <div class="field"><label for="issueDate">تاريخ الصرف</label><input id="issueDate" type="date" required></div>
+    <div class="field"><label for="issueDate">تاريخ الصرف</label><input id="issueDate" type="date" min="" max="" required></div>
     <div class="field"><label for="issueDepartment">القسم المستلم *</label><select id="issueDepartment"><option value="">اختر القسم</option><option>الإنتاج</option><option>التصنيع</option><option>الجودة</option><option>الصيانة</option><option>البحث والتطوير</option><option value="أخرى">أخرى</option></select></div>
     <div class="field full" id="issueOtherDepartmentWrap" hidden><label for="issueOtherDepartment">اسم القسم *</label><input id="issueOtherDepartment" maxlength="80" placeholder="اكتب اسم القسم"></div>
     <div class="field full"><label for="issueReason">سبب الصرف *</label><textarea id="issueReason" rows="3" maxlength="500" placeholder="اكتب سبب صرف الخامة"></textarea></div>
@@ -295,7 +295,7 @@ function updateIssueSuggestions(){
 }
 function openIssueModal(itemId=null){
  $("issueForm").reset();$("issueError").hidden=true;$("issueError").textContent="";
- $("issueDate").value=localTodayISO();$("issueItemSearch").disabled=false;selectedIssueItemId=null;
+ const issueToday=localTodayISO();$("issueDate").min=issueToday;$("issueDate").max=issueToday;$("issueDate").value=issueToday;$("issueItemSearch").disabled=false;selectedIssueItemId=null;
  $("issueOtherDepartmentWrap").hidden=true;$("issueOtherDepartment").value="";
  $("issueItemOptions").innerHTML=issueItems().map(x=>'<option value="'+esc(primaryName(x))+'"></option>'+(secondaryName(x)&&secondaryName(x)!==primaryName(x)?'<option value="'+esc(secondaryName(x))+'"></option>':"")).join("");
  if(itemId!==null){const item=findIssueItemById(itemId);if(!item)return;selectedIssueItemId=item.id;$("issueItemSearch").value=primaryName(item);$("issueItemSearch").disabled=true;$("issueUnit").value=item.unit;$("issueStockInfo").textContent="الرصيد المتاح: "+totalStock(item).toLocaleString("en-US",{maximumFractionDigits:3})+" "+item.unit+" — "+(labels[item.warehouse]||item.warehouse);}
@@ -317,7 +317,7 @@ $("issueForm").onsubmit=e=>{
  const item=findIssueItemById(selectedIssueItemId),qtyText=$("issueQty").value,qty=Number(qtyText),department=$("issueDepartment").value==="أخرى"?$("issueOtherDepartment").value.trim():$("issueDepartment").value,reason=$("issueReason").value.trim();
  const fail=(message,id)=>{$("issueError").textContent=message;$("issueError").hidden=false;if(id)$(id).focus();};$("issueError").hidden=true;
  if(!item){fail("من فضلك اختر صنفًا موجودًا بالفعل في المخزن.","issueItemSearch");return;}
- const issueDate=$("issueDate").value,today=localTodayISO();if(!issueDate){fail("من فضلك أدخل تاريخ الصرف.","issueDate");return;}if(issueDate>today){fail("تاريخ الصرف لا يمكن أن يكون في المستقبل.","issueDate");return;}
+ const issueDate=$("issueDate").value,today=localTodayISO();if(!issueDate){fail("من فضلك أدخل تاريخ الصرف.","issueDate");return;}if(issueDate<today){fail("لا يمكن تسجيل إذن صرف بتاريخ قديم؛ تاريخ الصرف يجب أن يكون تاريخ اليوم.","issueDate");return;}if(issueDate>today){fail("لا يمكن تسجيل إذن صرف بتاريخ مستقبلي؛ تاريخ الصرف يجب أن يكون تاريخ اليوم.","issueDate");return;}
  if(qtyText.trim()===""||!Number.isFinite(qty)||qty<=0){fail("كمية الصرف يجب أن تكون أكبر من صفر.","issueQty");return;}
  const available=totalStock(item);if(qty>available+1e-9){fail("الكمية المطلوبة أكبر من الرصيد المتاح. الرصيد الحالي: "+available+" "+item.unit,"issueQty");return;}
  if(!$("issueDepartment").value){fail("من فضلك اختر القسم المستلم.","issueDepartment");return;}
