@@ -91,7 +91,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
   <button class="tab" data-warehouse="equipment">🛠️ المعدات</button>
   <button class="tab" data-warehouse="finished">🧴 المنتجات النهائية</button>
  </div>
- <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إذن إضافة</button><button class="secondary" id="issueOut" type="button">إذن صرف</button><button class="secondary" id="issueLogOpen" type="button">سجل أذون الصرف</button><div class="toolbar-summary" aria-label="ملخص المخزون"><div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div><div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div></div><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">i</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
+ <div class="toolbar"><div class="toolbar-actions"><button class="primary" id="addItem">＋ إذن إضافة</button><button class="secondary" id="issueOut" type="button">إذن صرف</button><div class="toolbar-summary" aria-label="ملخص المخزون"><div class="metric"><small>عدد الأصناف المسجلة</small><strong id="count">0</strong></div><div class="metric"><small>قيمة المخزون التقديرية</small><strong id="value">0.00 ج.م</strong></div></div><button class="guide-bell" id="guideBell" type="button" aria-label="عرض الرسالة الإرشادية" title="الرسالة الإرشادية">i</button></div><input class="search" id="search" placeholder="ابحث باسم الصنف أو المورد..."></div>
  <div class="tablewrap"><table><thead><tr><th>اسم الصنف</th><th>الوحدة</th><th>الرصيد الإجمالي</th><th>متوسط سعر الوحدة</th><th>إضافة كمية</th></tr></thead><tbody id="rows"></tbody></table></div>
  <p class="muted" style="font-size:12px;margin-top:10px">ملاحظة: قيمة المخزون ومتوسط السعر تقديريان على أساس متوسط تكلفة الشراء المرجح. المعدات تُسجّل كأصول/عدد ولا تدخل تلقائياً في تكلفة الخامات.</p>
 </div>
@@ -133,7 +133,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
     <div class="field full"><label for="issueItemSearch">اسم الصنف *</label><input id="issueItemSearch" list="issueItemOptions" autocomplete="off" placeholder="اكتب حرفًا أو أكثر للبحث في أصناف المخزن"><datalist id="issueItemOptions"></datalist><div class="issue-stock-hint" id="issueStockInfo">اختر صنفًا مسجلًا في المخزن لعرض رصيده المتاح.</div></div>
     <div class="field"><label for="issueQty">كمية الصرف *</label><input id="issueQty" type="number" min="0.001" step="0.001" placeholder="الكمية المطلوب صرفها"></div>
     <div class="field"><label for="issueUnit">وحدة القياس</label><input id="issueUnit" readonly placeholder="تظهر بعد اختيار الصنف"></div>
-    <div class="field"><label for="issueDate">تاريخ الصرف</label><input id="issueDate" type="date" readonly></div>
+    <div class="field"><label for="issueDate">تاريخ الصرف</label><input id="issueDate" type="date" required></div>
     <div class="field"><label for="issueDepartment">القسم المستلم *</label><select id="issueDepartment"><option value="">اختر القسم</option><option>الإنتاج</option><option>التصنيع</option><option>الجودة</option><option>الصيانة</option><option>البحث والتطوير</option><option value="أخرى">أخرى</option></select></div>
     <div class="field full" id="issueOtherDepartmentWrap" hidden><label for="issueOtherDepartment">اسم القسم *</label><input id="issueOtherDepartment" maxlength="80" placeholder="اكتب اسم القسم"></div>
     <div class="field full"><label for="issueReason">سبب الصرف *</label><textarea id="issueReason" rows="3" maxlength="500" placeholder="اكتب سبب صرف الخامة"></textarea></div>
@@ -141,13 +141,6 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
    <div id="issueError" role="alert" aria-live="assertive" hidden style="margin:12px 0;padding:12px;border:1px solid #c62828;border-radius:10px;background:#fff0f0;color:#9b1c1c;font-weight:700"></div>
    <div class="formactions"><button class="primary" type="submit">تأكيد الصرف</button><button class="secondary" type="button" id="cancelIssue">إلغاء</button></div>
   </form>
- </div>
-</div>
-<div class="modal" id="issueLogModal" role="dialog" aria-modal="true" aria-labelledby="issueLogTitle">
- <div class="dialog" style="width:min(960px,100%)">
-  <h2 id="issueLogTitle">سجل أذون الصرف</h2>
-  <div class="tablewrap"><table class="issue-log-table"><thead><tr><th>رقم الإذن</th><th>الصنف</th><th>المخزن</th><th>التاريخ</th><th>الكمية</th><th>القسم المستلم</th><th>سبب الصرف</th><th>الحالة</th></tr></thead><tbody id="issueLogRows"></tbody></table></div>
-  <div class="formactions"><button class="secondary" type="button" id="closeIssueLog">إغلاق</button></div>
  </div>
 </div>
 <script>
@@ -315,13 +308,6 @@ $("cancelIssue").onclick=closeIssueModal;
 $("issueItemSearch").addEventListener("input",updateIssueSuggestions);
 $("issueDepartment").addEventListener("change",()=>{$("issueOtherDepartmentWrap").hidden=$("issueDepartment").value!=="أخرى";});
 window.issueItem=id=>openIssueModal(id);
-function renderIssueLog(){
- const entries=data.flatMap(item=>(item.issues||[]).map(issue=>({item,issue}))).sort((a,b)=>String(b.issue.date||"").localeCompare(String(a.issue.date||""))||String(b.issue.code||"").localeCompare(String(a.issue.code||"")));
- $("issueLogRows").innerHTML=entries.length?entries.map(({item,issue})=>'<tr><td>'+esc(issue.code||"—")+'</td><td>'+esc(primaryName(item))+(secondaryName(item)?' — '+esc(secondaryName(item)):"")+'</td><td>'+esc(labels[item.warehouse]||item.warehouse||"—")+'</td><td>'+esc(issue.date||"—")+'</td><td>'+Number(issue.qty||0).toLocaleString("en-US",{maximumFractionDigits:3})+' '+esc(item.unit)+'</td><td>'+esc(issue.department||"—")+'</td><td class="issue-reason">'+esc(issue.reason||"—")+'</td><td class="issue-state">'+(issue.cancelled?'ملغي — تم رد الكمية':'تم الصرف')+'</td></tr>').join(""):'<tr><td colspan="8" class="empty">لا توجد أذون صرف مسجلة حتى الآن.</td></tr>';
-}
-$("issueLogOpen").onclick=()=>{renderIssueLog();$("issueLogModal").classList.add("show");};
-$("closeIssueLog").onclick=()=>$("issueLogModal").classList.remove("show");
-$("issueLogModal").addEventListener("click",e=>{if(e.target===$("issueLogModal"))$("issueLogModal").classList.remove("show");});
 function nextIssueCode(){
  let max=0;data.forEach(item=>(item.issues||[]).forEach(issue=>{const m=String(issue.code||"").match(/^SR-(\d+)$/);if(m)max=Math.max(max,Number(m[1]));}));
  return "SR-"+String(max+1).padStart(4,"0");
@@ -331,6 +317,7 @@ $("issueForm").onsubmit=e=>{
  const item=findIssueItemById(selectedIssueItemId),qtyText=$("issueQty").value,qty=Number(qtyText),department=$("issueDepartment").value==="أخرى"?$("issueOtherDepartment").value.trim():$("issueDepartment").value,reason=$("issueReason").value.trim();
  const fail=(message,id)=>{$("issueError").textContent=message;$("issueError").hidden=false;if(id)$(id).focus();};$("issueError").hidden=true;
  if(!item){fail("من فضلك اختر صنفًا موجودًا بالفعل في المخزن.","issueItemSearch");return;}
+ const issueDate=$("issueDate").value,today=localTodayISO();if(!issueDate){fail("من فضلك أدخل تاريخ الصرف.","issueDate");return;}if(issueDate>today){fail("تاريخ الصرف لا يمكن أن يكون في المستقبل.","issueDate");return;}
  if(qtyText.trim()===""||!Number.isFinite(qty)||qty<=0){fail("كمية الصرف يجب أن تكون أكبر من صفر.","issueQty");return;}
  const available=totalStock(item);if(qty>available+1e-9){fail("الكمية المطلوبة أكبر من الرصيد المتاح. الرصيد الحالي: "+available+" "+item.unit,"issueQty");return;}
  if(!$("issueDepartment").value){fail("من فضلك اختر القسم المستلم.","issueDepartment");return;}
@@ -340,7 +327,7 @@ $("issueForm").onsubmit=e=>{
  const ordered=(item.batches||[]).map((batch,index)=>({batch,index})).filter(x=>Number(x.batch.qty)>0).sort((a,b)=>String(a.batch.date||"").localeCompare(String(b.batch.date||""))||a.index-b.index);
  for(const entry of ordered){if(toAllocate<=1e-9)break;const batch=entry.batch;if(!batch.id)batch.id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+"-"+entry.index);const take=Math.min(Number(batch.qty),toAllocate);allocations.push({batchId:batch.id,qty:take,expiry:batch.expiry||"",batchSnapshot:{id:batch.id,date:batch.date||"",price:Number(batch.price||0),supplier:batch.supplier||"",expiry:batch.expiry||"",notes:batch.notes||"",type:batch.type||"إضافة كمية"}});batch.qty=Number((Number(batch.qty)-take).toFixed(6));toAllocate-=take;}
  if(toAllocate>1e-7){data=JSON.parse(previous);fail("تعذّر توزيع الكمية على دفعات المخزون. راجع الرصيد وحاول مرة أخرى.","issueQty");return;}
- item.issues=item.issues||[];const issue={code:nextIssueCode(),date:localTodayISO(),qty,department,reason,allocations,cancelled:false};item.issues.push(issue);
+ item.issues=item.issues||[];const issue={code:nextIssueCode(),date:issueDate,qty,department,reason,allocations,cancelled:false};item.issues.push(issue);
  if(!save()){data=JSON.parse(previous);fail("تعذّر حفظ إذن الصرف على الجهاز؛ لم يتم اعتماد الخصم.","issueQty");return;}
  const code=issue.code;closeIssueModal();render();alert("تم اعتماد إذن الصرف "+code+" وخصم "+qty+" "+item.unit+" من المخزون بنظام FIFO.");
 };
