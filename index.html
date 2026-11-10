@@ -427,7 +427,7 @@ $("itemForm").onsubmit=e=>{e.preventDefault();
    ["supplier",$("supplier").value.trim(),"من فضلك اكتب اسم الشركة أو المورد."],
    ["expiry",$("expiry").value,"من فضلك أدخل تاريخ الصلاحية."]
  ];
- if(addingMode!=="edit"&&addingMode!=="rename"){
+ if(addingMode!=="editDetails"&&addingMode!=="edit"&&addingMode!=="rename"){
    const missing=requiredChecks.find(x=>!x[1]);
    if(missing){const box=$("expiryError");box.textContent=missing[2];box.hidden=false;$(missing[0]).focus();return;}
  }
