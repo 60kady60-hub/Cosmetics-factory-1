@@ -133,7 +133,7 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
   <form id="issueForm" novalidate>
    <div class="formgrid">
     <div class="field full"><label for="issueItemSearch">اسم الصنف *</label><input id="issueItemSearch" list="issueItemOptions" autocomplete="off" placeholder="اكتب حرفًا أو أكثر للبحث في أصناف المخزن"><datalist id="issueItemOptions"></datalist><div class="issue-stock-hint" id="issueStockInfo">اختر صنفًا مسجلًا في المخزن لعرض رصيده المتاح.</div></div>
-    <div class="field"><label for="issueQty">كمية الصرف *</label><input id="issueQty" type="number" min="0.001" step="0.001" placeholder="الكمية المطلوب صرفها"></div>
+    <div class="field"><label for="issueQty">كمية الصرف *</label><input id="issueQty" type="number" min="0.001" step="0.001" placeholder="الكمية المطلوب صرفها"><div class="issue-stock-hint" id="issueQtyInfo">اختر صنفًا وأدخل الكمية لحساب المتبقي بعد الصرف.</div></div>
     <div class="field"><label for="issueUnit">وحدة القياس</label><input id="issueUnit" readonly placeholder="تظهر بعد اختيار الصنف"></div>
     <div class="field"><label for="issueDate">تاريخ الصرف</label><input id="issueDate" type="date" min="" max="" required></div>
     <div class="field"><label for="issueDepartment">القسم المستلم *</label><select id="issueDepartment"><option value="">اختر القسم</option><option>الإنتاج</option><option>التصنيع</option><option>الجودة</option><option>الصيانة</option><option>البحث والتطوير</option><option value="أخرى">أخرى</option></select></div>
@@ -296,7 +296,28 @@ function updateIssueSuggestions(){
  if(match){info.textContent="الرصيد المتاح: "+totalStock(match).toLocaleString("en-US",{maximumFractionDigits:3})+" "+match.unit+" — المخزن: "+(labels[match.warehouse]||match.warehouse);}
  else{info.textContent="اختر صنفًا موجودًا في قائمة المخزن؛ البحث يعرض الأصناف المسجلة فقط.";}
  $("issueUnit").value=match?match.unit:"";
+ updateIssueQuantityInfo();
 }
+function updateIssueQuantityInfo(){
+ const box=$("issueQtyInfo"),item=findIssueItemById(selectedIssueItemId),raw=$("issueQty").value;
+ if(!item){box.textContent="اختر صنفًا أولًا لعرض الكمية المتاحة والمتبقي بعد الصرف.";return;}
+ const available=totalStock(item),unit=item.unit;
+ if(raw.trim()===""){box.textContent="المتاح للصرف: "+available.toLocaleString("en-US",{maximumFractionDigits:3})+" "+unit+". أدخل الكمية المطلوبة لحساب المتبقي بعد الصرف.";return;}
+ const qty=Number(raw);
+ if(!Number.isFinite(qty)||qty<=0){box.textContent="أدخل كمية أكبر من صفر.";return;}
+ if(qty>available+1e-9){box.textContent="الكمية المطلوبة أكبر من المتاح للصرف ("+available.toLocaleString("en-US",{maximumFractionDigits:3})+" "+unit+").";box.style.color="#a32121";return;}
+ box.style.color="";
+ box.textContent="المتاح للصرف: "+available.toLocaleString("en-US",{maximumFractionDigits:3})+" "+unit+" — المتبقي بعد الصرف: "+Math.max(0,available-qty).toLocaleString("en-US",{maximumFractionDigits:3})+" "+unit+".";
+}
+$("issueQty").addEventListener("input",updateIssueQuantityInfo);
+$("issueQty").addEventListener("change",updateIssueQuantityInfo);
+function enforceIssueToday(){
+ const field=$("issueDate"),today=localTodayISO();field.min=today;field.max=today;
+ if(field.value!==today)field.value=today;
+ field.setCustomValidity("");
+}
+$("issueDate").addEventListener("input",enforceIssueToday);
+$("issueDate").addEventListener("change",enforceIssueToday);
 function openIssueModal(itemId=null){
  $("issueForm").reset();$("issueError").hidden=true;$("issueError").textContent="";
  const issueToday=localTodayISO();$("issueDate").min=issueToday;$("issueDate").max=issueToday;$("issueDate").value=issueToday;$("issueItemSearch").disabled=false;selectedIssueItemId=null;
@@ -304,6 +325,7 @@ function openIssueModal(itemId=null){
  $("issueItemOptions").innerHTML=issueItems().map(x=>'<option value="'+esc(primaryName(x))+'"></option>'+(secondaryName(x)&&secondaryName(x)!==primaryName(x)?'<option value="'+esc(secondaryName(x))+'"></option>':"")).join("");
  if(itemId!==null){const item=findIssueItemById(itemId);if(!item)return;selectedIssueItemId=item.id;$("issueItemSearch").value=primaryName(item);$("issueItemSearch").disabled=true;$("issueUnit").value=item.unit;$("issueStockInfo").textContent="الرصيد المتاح: "+totalStock(item).toLocaleString("en-US",{maximumFractionDigits:3})+" "+item.unit+" — "+(labels[item.warehouse]||item.warehouse);}
  else{$("issueItemSearch").value="";$("issueUnit").value="";$("issueStockInfo").textContent="اكتب حرفًا أو أكثر لعرض الأصناف الموجودة في المخزن الحالي.";}
+ updateIssueQuantityInfo();enforceIssueToday();
  $("issueModal").classList.add("show");if(itemId===null)$("issueItemSearch").focus();
 }
 function closeIssueModal(){$("issueModal").classList.remove("show");$("issueForm").reset();$("issueItemSearch").disabled=false;selectedIssueItemId=null;$("issueError").hidden=true;}
@@ -321,7 +343,7 @@ $("issueForm").onsubmit=e=>{
  const item=findIssueItemById(selectedIssueItemId),qtyText=$("issueQty").value,qty=Number(qtyText),department=$("issueDepartment").value==="أخرى"?$("issueOtherDepartment").value.trim():$("issueDepartment").value,reason=$("issueReason").value.trim();
  const fail=(message,id)=>{$("issueError").textContent=message;$("issueError").hidden=false;if(id)$(id).focus();};$("issueError").hidden=true;
  if(!item){fail("من فضلك اختر صنفًا موجودًا بالفعل في المخزن.","issueItemSearch");return;}
- const issueDate=$("issueDate").value,today=localTodayISO();if(!issueDate){fail("من فضلك أدخل تاريخ الصرف.","issueDate");return;}if(issueDate<today){fail("لا يمكن تسجيل إذن صرف بتاريخ قديم؛ تاريخ الصرف يجب أن يكون تاريخ اليوم.","issueDate");return;}if(issueDate>today){fail("لا يمكن تسجيل إذن صرف بتاريخ مستقبلي؛ تاريخ الصرف يجب أن يكون تاريخ اليوم.","issueDate");return;}
+ const issueDate=$("issueDate").value,today=localTodayISO();if(!issueDate){fail("من فضلك أدخل تاريخ الصرف.","issueDate");return;}if(issueDate!==today){fail("تاريخ الصرف يجب أن يكون تاريخ اليوم فقط.","issueDate");enforceIssueToday();return;}if(issueDate<today){fail("لا يمكن تسجيل إذن صرف بتاريخ قديم؛ تاريخ الصرف يجب أن يكون تاريخ اليوم.","issueDate");return;}if(issueDate>today){fail("لا يمكن تسجيل إذن صرف بتاريخ مستقبلي؛ تاريخ الصرف يجب أن يكون تاريخ اليوم.","issueDate");return;}
  if(qtyText.trim()===""||!Number.isFinite(qty)||qty<=0){fail("كمية الصرف يجب أن تكون أكبر من صفر.","issueQty");return;}
  const available=totalStock(item);if(qty>available+1e-9){fail("الكمية المطلوبة أكبر من الرصيد المتاح. الرصيد الحالي: "+available+" "+item.unit,"issueQty");return;}
  if(!$("issueDepartment").value){fail("من فضلك اختر القسم المستلم.","issueDepartment");return;}
