@@ -71,6 +71,10 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 @media(max-width:600px){.stock-row-actions{align-items:stretch}.stock-row-actions button{font-size:11px;padding:7px 8px}}
 
 .movement-picker{display:grid;gap:12px;padding:6px}.movement-picker>strong{color:var(--green)}.movement-picker-actions{display:flex;gap:10px;flex-wrap:wrap}.movement-picker-actions button{min-width:150px;flex:1}.batch-details-inner .tablewrap{margin-top:4px}
+
+/* Make the stock issue action clearly red without changing its behavior. */
+#issueOut{background:#c62828;color:#fff;border-color:#c62828}
+#issueOut:hover{background:#a91f1f;border-color:#a91f1f}
 </style>
 </head>
 <body>
