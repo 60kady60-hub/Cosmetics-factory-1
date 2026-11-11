@@ -87,7 +87,7 @@ body.welcome-mode #welcomeScreen{display:flex}
 .welcome-logo{display:block;width:clamp(158px,43vw,218px);height:auto;overflow:visible;animation:flaskFloat 3.8s ease-in-out infinite;filter:drop-shadow(0 18px 24px #6e579333)}
 .welcome-brand strong{font-size:clamp(38px,10vw,54px);font-weight:850;letter-spacing:5px;line-height:1.05;color:#493260}
 .welcome-brand span{font-size:clamp(16px,4vw,21px);font-weight:750;letter-spacing:6px;color:#648f83}
-@keyframes flaskFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-11px) rotate(1deg)}}
+@keyframes flaskFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @media(prefers-reduced-motion:reduce){.welcome-logo{animation:none}}
 .welcome-brand:focus-visible{outline:3px solid #d8ad5c;outline-offset:8px;border-radius:22px}
 
@@ -97,26 +97,18 @@ body.welcome-mode #welcomeScreen{display:flex}
 <body class="welcome-mode">
 <section id="welcomeScreen" aria-label="الدخول إلى المصنع">
  <button class="welcome-brand" id="enterFactory" type="button" aria-label="الدخول إلى أقسام المصنع">
-  <svg class="welcome-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="زجاجة سيروم تجميلية داخل مختبر">
+  <svg class="welcome-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="دورق زجاجي">
    <defs>
-    <linearGradient id="serumGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".98"/><stop offset=".48" stop-color="#d8f7ee" stop-opacity=".88"/><stop offset="1" stop-color="#9bdacb" stop-opacity=".96"/></linearGradient>
-    <linearGradient id="serumLiquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8f0dc"/><stop offset="1" stop-color="#69bea5"/></linearGradient>
-    <linearGradient id="serumCap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8d6bb4"/><stop offset="1" stop-color="#574071"/></linearGradient>
+    <linearGradient id="flaskGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".96"/><stop offset=".5" stop-color="#d9f3f2" stop-opacity=".65"/><stop offset="1" stop-color="#a9d9d6" stop-opacity=".88"/></linearGradient>
+    <linearGradient id="flaskLiquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b69ad9"/><stop offset="1" stop-color="#8063b3"/></linearGradient>
    </defs>
-   <ellipse cx="120" cy="251" rx="67" ry="10" fill="#76618e" opacity=".13"/>
-   <path d="M91 25h58v30l12 16v18H79V71l12-16V25Z" fill="url(#serumCap)" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
-   <path d="M103 24h34v-9h-34z" fill="#b8a1d4"/>
-   <rect x="82" y="77" width="76" height="157" rx="23" fill="url(#serumGlass)" stroke="#fff" stroke-width="5"/>
-   <path d="M87 157h66v53a18 18 0 0 1-18 18h-30a18 18 0 0 1-18-18v-53Z" fill="url(#serumLiquid)" opacity=".94"/>
-   <path d="M98 94c-8 25-8 47-4 65" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".8"/>
-   <rect x="94" y="119" width="52" height="53" rx="10" fill="#fff" opacity=".78"/>
-   <path d="M107 139h26M107 148h19" stroke="#8a70a8" stroke-width="4" stroke-linecap="round"/>
-   <path d="M177 64c-13 18-17 25-17 34a17 17 0 0 0 34 0c0-9-4-16-17-34Z" fill="#8edbc5" stroke="#fff" stroke-width="4"/>
-   <path d="M178 85c-4 6-6 10-5 14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-   <path d="m58 83 5 11 11 5-11 5-5 11-5-11-11-5 11-5 5-11ZM183 185l4 8 8 4-8 4-4 8-4-8-8-4 8-4 4-8Z" fill="#b39ad4"/>
+   <ellipse cx="120" cy="248" rx="62" ry="9" fill="#625079" opacity=".12"/>
+   <path d="M101 25h38v76l48 91c12 23-4 49-31 49H84c-27 0-43-26-31-49l48-91V25Z" fill="url(#flaskGlass)" stroke="#fff" stroke-width="6" stroke-linejoin="round"/>
+   <path d="M104 25h32v78l40 78c8 16-2 35-21 35H85c-19 0-29-19-21-35l40-78V25Z" fill="url(#flaskLiquid)" opacity=".84"/>
+   <path d="M104 25h32" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+   <path d="M91 143c-12 22-21 39-19 51" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".78"/>
+   <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
-   <strong>AYLA</strong>
-  <span>COSMETICS</span>
  </button>
 </section>
 <header><h1>نظام إدارة مصنع الكوزماتكس</h1><p>نسخة أولية لإدارة المخازن — تعمل محلياً على هذا الجهاز</p></header>
