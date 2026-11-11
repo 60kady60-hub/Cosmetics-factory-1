@@ -174,7 +174,9 @@ const $=id=>document.getElementById(id);
 const STORAGE_KEY="cosmetics_stock_v1";
 let data=[];
 try{const stored=localStorage.getItem(STORAGE_KEY);data=stored?JSON.parse(stored):[];if(!Array.isArray(data))data=[];}catch(err){data=[];}
-data.forEach(x=>{if(!x.nameAr)x.nameAr=x.name||"";if(!x.nameEn)x.nameEn="";});
+// تطبيع آمن للسجلات القديمة أو غير المكتملة حتى لا يتوقف تشغيل الواجهة بالكامل.
+data=data.filter(x=>x&&typeof x==="object"&&!Array.isArray(x));
+data.forEach(x=>{if(!x.nameAr)x.nameAr=x.name||"";if(!x.nameEn)x.nameEn="";if(!Array.isArray(x.batches))x.batches=[];if(!Array.isArray(x.issues))x.issues=[];if(!x.warehouse)x.warehouse="raw";});
 let current="raw", editId=null, addingMode="new";
 function setSaveStatus(message,isError=false){const el=$("saveStatus");if(!el)return;el.textContent=message;el.classList.toggle("error",!!isError);}
 function save(){try{const serialized=JSON.stringify(data);localStorage.setItem(STORAGE_KEY,serialized);if(localStorage.getItem(STORAGE_KEY)!==serialized)throw new Error("تعذر التحقق من البيانات المحفوظة");const now=new Date();setSaveStatus("✓ تم الحفظ والتحقق تلقائيًا — آخر حفظ: "+now.toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit",second:"2-digit"}));return true;}catch(err){setSaveStatus("⚠️ تعذّر تأكيد الحفظ على الهاتف. راجع مساحة التخزين وحاول مرة أخرى.",true);return false;}}
@@ -558,9 +560,9 @@ $("restoreFile").onchange=async e=>{
  }catch(err){alert("ملف JSON غير صالح أو تعذّر حفظ البيانات. لم يتم اعتماد الاستيراد.");}
  finally{e.target.value="";}
 };
-if(localStorage.getItem(STORAGE_KEY)!==null){setSaveStatus("✓ تم تحميل البيانات المحفوظة في هذا المتصفح.");}
-else{setSaveStatus("لا توجد بيانات محفوظة بعد. أي إضافة أو تعديل سيتم حفظه تلقائيًا.");}
-render();
+try{if(localStorage.getItem(STORAGE_KEY)!==null){setSaveStatus("✓ تم تحميل البيانات المحفوظة في هذا المتصفح.");}
+else{setSaveStatus("لا توجد بيانات محفوظة بعد. أي إضافة أو تعديل سيتم حفظه تلقائيًا.");}}catch(err){setSaveStatus("⚠️ المتصفح يمنع الوصول إلى التخزين المحلي؛ قد لا تُحفظ التعديلات.",true);}
+try{render();}catch(err){console.error("تعذر عرض بيانات المخزون:",err);setSaveStatus("⚠️ حدث خطأ أثناء تحميل البيانات. بياناتك الأصلية لم يتم حذفها.",true);}
 </script>
 <script>
 if(sessionStorage.getItem("cosmetics_app_reloaded_v8"))sessionStorage.removeItem("cosmetics_app_reloaded_v8");
