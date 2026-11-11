@@ -75,9 +75,28 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 /* Make the stock issue action clearly red without changing its behavior. */
 #issueOut{background:#c62828;color:#fff;border-color:#c62828}
 #issueOut:hover{background:#a91f1f;border-color:#a91f1f}
+
+/* شاشة دخول المصنع: واجهة مستقلة ولا تغيّر وظائف الأقسام. */
+body.welcome-mode>header,body.welcome-mode>#mainNav,body.welcome-mode>main,body.welcome-mode>footer,body.welcome-mode>#saveStatus{display:none!important}
+#welcomeScreen{display:none;min-height:100svh;min-height:100dvh;background:linear-gradient(145deg,#102e29,#24594f);align-items:center;justify-content:center;padding:24px}
+body.welcome-mode #welcomeScreen{display:flex}
+.welcome-brand{appearance:none;border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;width:min(100%,420px);min-height:50vh;cursor:pointer;text-align:center;padding:28px}
+.welcome-brand img{width:clamp(112px,32vw,176px);height:auto;filter:drop-shadow(0 12px 24px #0004)}
+.welcome-brand strong{font-size:clamp(34px,9vw,52px);font-weight:800;letter-spacing:3px;line-height:1.1}
+.welcome-brand span{font-size:14px;color:#e0ece7}
+.welcome-brand:focus-visible{outline:3px solid #d8ad5c;outline-offset:8px;border-radius:22px}
+@media(prefers-reduced-motion:no-preference){.welcome-brand img{animation:welcomeFloat 3s ease-in-out infinite}@keyframes welcomeFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}}
+
 </style>
 </head>
-<body>
+<body class="welcome-mode">
+<section id="welcomeScreen" aria-label="الدخول إلى المصنع">
+ <button class="welcome-brand" id="enterFactory" type="button" aria-label="الدخول إلى أقسام المصنع">
+  <img src="./icon.svg" alt="شعار مصنع الكوزماتيكس">
+  <strong>COSMETICS</strong>
+  <span>اضغط على اسم المصنع للدخول إلى الإدارات</span>
+ </button>
+</section>
 <header><h1>نظام إدارة مصنع الكوزماتكس</h1><p>نسخة أولية لإدارة المخازن — تعمل محلياً على هذا الجهاز</p></header>
 <nav id="mainNav" aria-label="القائمة الرئيسية">
  <button class="tab active" data-main="warehouses" draggable="true">📦 المخازن</button>
@@ -570,6 +589,11 @@ $("restoreFile").onchange=async e=>{
 try{if(localStorage.getItem(STORAGE_KEY)!==null){setSaveStatus("✓ تم تحميل البيانات المحفوظة في هذا المتصفح.");}
 else{setSaveStatus("لا توجد بيانات محفوظة بعد. أي إضافة أو تعديل سيتم حفظه تلقائيًا.");}}catch(err){setSaveStatus("⚠️ المتصفح يمنع الوصول إلى التخزين المحلي؛ قد لا تُحفظ التعديلات.",true);}
 try{render();}catch(err){console.error("تعذر عرض بيانات المخزون:",err);setSaveStatus("⚠️ حدث خطأ أثناء تحميل البيانات. بياناتك الأصلية لم يتم حذفها.",true);}
+</script>
+<script>
+document.getElementById("enterFactory").addEventListener("click",()=>{
+ document.body.classList.remove("welcome-mode");
+});
 </script>
 <script>
 if(sessionStorage.getItem("cosmetics_app_reloaded_v8"))sessionStorage.removeItem("cosmetics_app_reloaded_v8");
