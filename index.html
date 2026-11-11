@@ -101,6 +101,24 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
  <div class="tablewrap"><table><thead><tr><th>اسم الصنف</th><th>الوحدة</th><th>الرصيد الإجمالي</th><th>متوسط سعر الوحدة</th><th>إضافة كمية</th></tr></thead><tbody id="rows"></tbody></table></div>
  <p class="muted" style="font-size:12px;margin-top:10px">ملاحظة: قيمة المخزون ومتوسط السعر تقديريان على أساس متوسط تكلفة الشراء المرجح. المعدات تُسجّل كأصول/عدد ولا تدخل تلقائياً في تكلفة الخامات.</p>
 </div>
+<section id="suppliersSection" class="panel" hidden>
+ <div class="toolbar" style="padding:0"><div><h2 style="margin:0 0 6px">إدارة الموردين</h2><small class="muted">سجل بيانات الشركات والموردين المرتبطين بتوريد الخامات</small></div><button class="primary" id="addSupplierBtn" type="button">＋ إضافة مورد جديد</button></div>
+ <div class="toolbar" style="padding:0"><input class="search" id="supplierSearch" placeholder="ابحث باسم المورد أو التليفون أو العنوان..."></div>
+ <div class="tablewrap"><table style="min-width:760px"><thead><tr><th>اسم المورد</th><th>التليفون</th><th>العنوان</th><th>طريقة الشراء</th><th>الأصناف المرتبطة</th><th>الإجراءات</th></tr></thead><tbody id="suppliersRows"></tbody></table></div>
+ <p class="backup-help">يُحفظ سجل الموردين على هذا الجهاز بشكل مستقل عن بيانات المخزون.</p>
+</section>
+<div class="modal" id="supplierModal" role="dialog" aria-modal="true" aria-labelledby="supplierModalTitle"><div class="dialog">
+ <h2 id="supplierModalTitle">إضافة مورد جديد</h2><form id="supplierForm" novalidate><div class="formgrid">
+ <div class="field"><label for="supplierName">اسم الشركة / المورد *</label><input id="supplierName" required maxlength="120"></div>
+ <div class="field"><label for="supplierPhone">رقم التليفون *</label><input id="supplierPhone" required type="tel" maxlength="30"></div>
+ <div class="field"><label for="supplierPhone2">رقم تليفون إضافي</label><input id="supplierPhone2" type="tel" maxlength="30"></div>
+ <div class="field"><label for="supplierContact">الشخص المسؤول عن التعامل</label><input id="supplierContact" maxlength="100"></div>
+ <div class="field full"><label for="supplierAddress">العنوان / مكان الشركة</label><input id="supplierAddress" maxlength="240"></div>
+ <div class="field"><label for="supplierPurchaseMethod">طريقة الشراء والتوريد</label><select id="supplierPurchaseMethod"><option value="">غير محددة</option><option>توريد للمصنع</option><option>استلام من مقر المورد</option><option>شحن</option><option>أخرى</option></select></div>
+ <div class="field"><label for="supplierPaymentMethod">طريقة الدفع</label><select id="supplierPaymentMethod"><option value="">غير محددة</option><option>نقدي</option><option>آجل</option><option>تحويل بنكي</option><option>أخرى</option></select></div>
+ <div class="field full"><label for="supplierNotes">ملاحظات</label><textarea id="supplierNotes" rows="2"></textarea></div>
+ </div><div id="supplierError" class="notice" hidden></div><div class="formactions"><button class="primary" type="submit">حفظ المورد</button><button class="secondary" type="button" id="cancelSupplier">إلغاء</button></div></form>
+</div></div>
 <section id="placeholder" class="panel" hidden><h2 id="placeholderTitle"></h2><p>هذا القسم ظاهر في التصميم، وسيتم تفعيله في مرحلة لاحقة وربطه بحركات المخزون.</p></section>
 <section id="backupSection" class="panel backup-panel" hidden>
  <div><h2 style="margin:0 0 8px">النسخ الاحتياطي واستعادة البيانات</h2><p class="backup-help">احتفظ بملف النسخة الاحتياطية على هاتفك أو في مكان آمن. يمكنك استخدامه لاسترجاع بيانات المخزن عند تغيير ملف البرنامج أو الجهاز.</p></div>
@@ -453,10 +471,51 @@ window.historyItem=id=>{let x=data.find(x=>x.id===id);alert("حركة الصنف
 document.querySelectorAll("[data-warehouse]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-warehouse]").forEach(z=>z.classList.remove("active"));b.classList.add("active");current=b.dataset.warehouse;$("search").value="";render()});
 document.querySelectorAll("[data-main]").forEach(b=>b.onclick=()=>{
  document.querySelectorAll("[data-main]").forEach(z=>z.classList.remove("active"));b.classList.add("active");
- const isWarehouse=b.dataset.main==="warehouses",isBackup=b.dataset.main==="backup";
- $("app").hidden=!isWarehouse;$("placeholder").hidden=isWarehouse||isBackup;$("backupSection").hidden=!isBackup;
- if(!isWarehouse&&!isBackup){$("placeholderTitle").textContent=b.textContent.trim();}
+ const isWarehouse=b.dataset.main==="warehouses",isBackup=b.dataset.main==="backup",isPurchases=b.dataset.main==="purchases";
+ $("app").hidden=!isWarehouse;$("placeholder").hidden=isWarehouse||isBackup||isPurchases;$("backupSection").hidden=!isBackup;$("suppliersSection").hidden=!isPurchases;
+ if(isPurchases)renderSuppliers();
+ if(!isWarehouse&&!isBackup&&!isPurchases){$("placeholderTitle").textContent=b.textContent.trim();}
 });
+
+// إدارة الموردين: سجل مستقل لتجنب المساس ببيانات المخزون.
+const SUPPLIERS_KEY="cosmetics_suppliers_v1";
+let suppliers=[],editingSupplierId=null;
+try{const saved=localStorage.getItem(SUPPLIERS_KEY);suppliers=saved?JSON.parse(saved):[];if(!Array.isArray(suppliers))suppliers=[];}catch{suppliers=[];}
+function saveSuppliers(){try{const v=JSON.stringify(suppliers);localStorage.setItem(SUPPLIERS_KEY,v);return localStorage.getItem(SUPPLIERS_KEY)===v;}catch{return false;}}
+function supplierId(){return crypto.randomUUID?crypto.randomUUID():("sup-"+Date.now()+"-"+Math.random().toString(36).slice(2));}
+function ensureSupplierByName(name){const n=String(name||"").trim();if(!n)return;let x=suppliers.find(z=>z.name.trim().toLocaleLowerCase()===n.toLocaleLowerCase());if(!x){suppliers.push({id:supplierId(),name:n,phone:"",phone2:"",contact:"",address:"",purchaseMethod:"",paymentMethod:"",notes:""});saveSuppliers();}}
+data.forEach(x=>{ensureSupplierByName(x.supplier);(x.batches||[]).forEach(b=>ensureSupplierByName(b.supplier));});
+function supplierItemCount(name){return data.filter(x=>String(x.supplier||"").trim().toLocaleLowerCase()===name.trim().toLocaleLowerCase()).length;}
+function renderSuppliers(){
+ const term=$("supplierSearch").value.trim().toLocaleLowerCase();
+ const list=suppliers.filter(x=>[x.name,x.phone,x.phone2,x.address,x.contact].join(" ").toLocaleLowerCase().includes(term)).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
+ $("suppliersRows").innerHTML=list.length?list.map(x=>'<tr><td><strong>'+esc(x.name)+'</strong></td><td>'+esc(x.phone||"—")+(x.phone2?'<br>'+esc(x.phone2):"")+'</td><td>'+esc(x.address||"—")+'</td><td>'+esc(x.purchaseMethod||"—")+'</td><td>'+supplierItemCount(x.name)+'</td><td><div class="actions"><button class="secondary" type="button" data-supplier-edit="'+esc(x.id)+'">تعديل</button><button class="secondary" type="button" data-supplier-delete="'+esc(x.id)+'">حذف</button></div></td></tr>').join(""):'<tr><td colspan="6" class="empty">لا يوجد موردون مسجلون. اضغط «إضافة مورد جديد» للبدء.</td></tr>';
+}
+function openSupplierForm(x){
+ editingSupplierId=x?x.id:null;$("supplierModalTitle").textContent=x?"تعديل بيانات المورد":"إضافة مورد جديد";
+ $("supplierName").value=x?.name||"";$("supplierPhone").value=x?.phone||"";$("supplierPhone2").value=x?.phone2||"";$("supplierContact").value=x?.contact||"";$("supplierAddress").value=x?.address||"";$("supplierPurchaseMethod").value=x?.purchaseMethod||"";$("supplierPaymentMethod").value=x?.paymentMethod||"";$("supplierNotes").value=x?.notes||"";$("supplierError").hidden=true;$("supplierModal").classList.add("show");
+}
+$("addSupplierBtn").onclick=()=>openSupplierForm(null);
+$("cancelSupplier").onclick=()=>$("supplierModal").classList.remove("show");
+$("supplierSearch").oninput=renderSuppliers;
+$("suppliersRows").addEventListener("click",e=>{
+ const edit=e.target.closest("[data-supplier-edit]"),del=e.target.closest("[data-supplier-delete]");
+ if(edit){const x=suppliers.find(z=>z.id===edit.dataset.supplierEdit);if(x)openSupplierForm(x);}
+ if(del){const x=suppliers.find(z=>z.id===del.dataset.supplierDelete);if(!x)return;const linked=supplierItemCount(x.name);if(linked){alert("لا يمكن حذف المورد لأنه مرتبط بأصناف في المخزن. يمكنك تعديل بياناته بدلًا من حذفه.");return;}if(confirm("هل تريد حذف المورد «"+x.name+"»؟")){suppliers=suppliers.filter(z=>z.id!==x.id);if(!saveSuppliers())alert("تعذر حفظ الحذف على هذا الجهاز.");renderSuppliers();}}
+});
+$("supplierForm").onsubmit=e=>{
+ e.preventDefault();const name=$("supplierName").value.trim(),phone=$("supplierPhone").value.trim();
+ const fail=m=>{$("supplierError").textContent=m;$("supplierError").hidden=false;};
+ $("supplierError").hidden=true;if(!name){fail("اكتب اسم الشركة أو المورد.");$("supplierName").focus();return;}
+ if(!phone){fail("اكتب رقم التليفون الأساسي.");$("supplierPhone").focus();return;}
+ if(suppliers.some(x=>x.id!==editingSupplierId&&x.name.trim().toLocaleLowerCase()===name.toLocaleLowerCase())){fail("اسم المورد مسجل بالفعل.");$("supplierName").focus();return;}
+ const old=editingSupplierId?suppliers.find(x=>x.id===editingSupplierId):null;
+ const entry={id:editingSupplierId||supplierId(),name,phone,phone2:$("supplierPhone2").value.trim(),contact:$("supplierContact").value.trim(),address:$("supplierAddress").value.trim(),purchaseMethod:$("supplierPurchaseMethod").value,paymentMethod:$("supplierPaymentMethod").value,notes:$("supplierNotes").value.trim()};
+ if(old)Object.assign(old,entry);else suppliers.push(entry);
+ if(!saveSuppliers()){if(old)Object.assign(old,old);else suppliers=suppliers.filter(x=>x.id!==entry.id);fail("تعذر تأكيد حفظ بيانات المورد. حاول مرة أخرى.");return;}
+ $("supplierModal").classList.remove("show");renderSuppliers();
+};
+
 // ترتيب التبويبات: سحب بالماوس أو باللمس، مع حفظ الترتيب.
 const mainNav=$("mainNav"), orderKey="cosmetics_main_nav_order_v1";
 function saveMainOrder(){localStorage.setItem(orderKey,JSON.stringify([...mainNav.querySelectorAll("[data-main]")].map(b=>b.dataset.main)));}
