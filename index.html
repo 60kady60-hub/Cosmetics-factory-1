@@ -78,13 +78,16 @@ small.muted{color:var(--muted)}footer{text-align:center;color:var(--muted);font-
 
 /* شاشة دخول المصنع: واجهة مستقلة ولا تغيّر وظائف الأقسام. */
 body.welcome-mode>header,body.welcome-mode>#mainNav,body.welcome-mode>main,body.welcome-mode>footer,body.welcome-mode>#saveStatus{display:none!important}
-#welcomeScreen{display:none;min-height:100svh;min-height:100dvh;background:linear-gradient(145deg,#24113f 0%,#563078 52%,#8d69b2 100%);align-items:center;justify-content:center;padding:24px;overflow:hidden}
+#welcomeScreen{display:none;position:relative;isolation:isolate;min-height:100svh;min-height:100dvh;background:radial-gradient(ellipse at 50% 38%,#ffffff 0%,#f5efff 34%,#e8dcfa 68%,#d7c5ef 100%);align-items:center;justify-content:center;padding:24px;overflow:hidden}
+#welcomeScreen:before,#welcomeScreen:after{content:"";position:absolute;z-index:-1;border-radius:50%;filter:blur(2px);pointer-events:none}
+#welcomeScreen:before{width:280px;height:280px;top:-110px;right:-90px;background:radial-gradient(circle,#c7f5e9aa 0%,#c7f5e900 72%)}
+#welcomeScreen:after{width:340px;height:340px;bottom:-170px;left:-110px;background:radial-gradient(circle,#b9a0eaaa 0%,#b9a0ea00 72%)}
 body.welcome-mode #welcomeScreen{display:flex}
-.welcome-brand{appearance:none;border:0;background:transparent;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:min(100%,420px);min-height:50vh;cursor:pointer;text-align:center;padding:28px}
-.welcome-logo{display:block;width:clamp(130px,38vw,190px);height:auto;overflow:visible;animation:cupFloat 3s ease-in-out infinite;filter:drop-shadow(0 12px 24px #160b2770)}
-.welcome-brand strong{font-size:clamp(38px,10vw,54px);font-weight:800;letter-spacing:5px;line-height:1.05;color:#fff}
-.welcome-brand span{font-size:clamp(16px,4vw,21px);font-weight:700;letter-spacing:6px;color:#f0e5ff}
-@keyframes cupFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.welcome-brand{appearance:none;border:0;background:transparent;color:#33224b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;width:min(100%,420px);min-height:50vh;cursor:pointer;text-align:center;padding:28px}
+.welcome-logo{display:block;width:clamp(158px,43vw,218px);height:auto;overflow:visible;animation:flaskFloat 3.8s ease-in-out infinite;filter:drop-shadow(0 18px 24px #6e579333)}
+.welcome-brand strong{font-size:clamp(38px,10vw,54px);font-weight:850;letter-spacing:5px;line-height:1.05;color:#493260}
+.welcome-brand span{font-size:clamp(16px,4vw,21px);font-weight:750;letter-spacing:6px;color:#648f83}
+@keyframes flaskFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-11px) rotate(1deg)}}
 @media(prefers-reduced-motion:reduce){.welcome-logo{animation:none}}
 .welcome-brand:focus-visible{outline:3px solid #d8ad5c;outline-offset:8px;border-radius:22px}
 
@@ -94,12 +97,23 @@ body.welcome-mode #welcomeScreen{display:flex}
 <body class="welcome-mode">
 <section id="welcomeScreen" aria-label="الدخول إلى المصنع">
  <button class="welcome-brand" id="enterFactory" type="button" aria-label="الدخول إلى أقسام المصنع">
-  <svg class="welcome-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260" role="img" aria-label="الكأس الأخضر">
-   <path d="M48 24h144l-13 91c-5 37-31 62-59 62s-54-25-59-62L48 24Z" fill="#39d98a" stroke="#d8ffe9" stroke-width="7" stroke-linejoin="round"/>
-   <path d="M49 43H25c-3 42 12 68 48 75M191 43h24c3 42-12 68-48 75" fill="none" stroke="#39d98a" stroke-width="14" stroke-linecap="round"/>
-   <path d="M82 77c17 9 42 9 76 0" fill="none" stroke="#baffd8" stroke-width="7" stroke-linecap="round"/>
-   <path d="M120 177v35M83 222h74" fill="none" stroke="#39d98a" stroke-width="15" stroke-linecap="round"/>
-   <path d="M95 246h50" stroke="#d8ffe9" stroke-width="7" stroke-linecap="round"/>
+  <svg class="welcome-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" role="img" aria-label="زجاجة سيروم تجميلية داخل مختبر">
+   <defs>
+    <linearGradient id="serumGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".98"/><stop offset=".48" stop-color="#d8f7ee" stop-opacity=".88"/><stop offset="1" stop-color="#9bdacb" stop-opacity=".96"/></linearGradient>
+    <linearGradient id="serumLiquid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8f0dc"/><stop offset="1" stop-color="#69bea5"/></linearGradient>
+    <linearGradient id="serumCap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8d6bb4"/><stop offset="1" stop-color="#574071"/></linearGradient>
+   </defs>
+   <ellipse cx="120" cy="251" rx="67" ry="10" fill="#76618e" opacity=".13"/>
+   <path d="M91 25h58v30l12 16v18H79V71l12-16V25Z" fill="url(#serumCap)" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+   <path d="M103 24h34v-9h-34z" fill="#b8a1d4"/>
+   <rect x="82" y="77" width="76" height="157" rx="23" fill="url(#serumGlass)" stroke="#fff" stroke-width="5"/>
+   <path d="M87 157h66v53a18 18 0 0 1-18 18h-30a18 18 0 0 1-18-18v-53Z" fill="url(#serumLiquid)" opacity=".94"/>
+   <path d="M98 94c-8 25-8 47-4 65" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".8"/>
+   <rect x="94" y="119" width="52" height="53" rx="10" fill="#fff" opacity=".78"/>
+   <path d="M107 139h26M107 148h19" stroke="#8a70a8" stroke-width="4" stroke-linecap="round"/>
+   <path d="M177 64c-13 18-17 25-17 34a17 17 0 0 0 34 0c0-9-4-16-17-34Z" fill="#8edbc5" stroke="#fff" stroke-width="4"/>
+   <path d="M178 85c-4 6-6 10-5 14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+   <path d="m58 83 5 11 11 5-11 5-5 11-5-11-11-5 11-5 5-11ZM183 185l4 8 8 4-8 4-4 8-4-8-8-4 8-4 4-8Z" fill="#b39ad4"/>
   </svg>
    <strong>AYLA</strong>
   <span>COSMETICS</span>
