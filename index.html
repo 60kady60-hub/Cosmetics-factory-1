@@ -485,7 +485,7 @@ function saveSuppliers(){try{const v=JSON.stringify(suppliers);localStorage.setI
 function supplierId(){return crypto.randomUUID?crypto.randomUUID():("sup-"+Date.now()+"-"+Math.random().toString(36).slice(2));}
 function ensureSupplierByName(name){const n=String(name||"").trim();if(!n)return;let x=suppliers.find(z=>z.name.trim().toLocaleLowerCase()===n.toLocaleLowerCase());if(!x){suppliers.push({id:supplierId(),name:n,phone:"",phone2:"",contact:"",address:"",purchaseMethod:"",paymentMethod:"",notes:""});saveSuppliers();}}
 data.forEach(x=>{ensureSupplierByName(x.supplier);(x.batches||[]).forEach(b=>ensureSupplierByName(b.supplier));});
-function supplierItemCount(name){return data.filter(x=>String(x.supplier||"").trim().toLocaleLowerCase()===name.trim().toLocaleLowerCase()).length;}
+function supplierItemCount(name){const key=name.trim().toLocaleLowerCase();return data.filter(x=>String(x.supplier||"").trim().toLocaleLowerCase()===key||(x.batches||[]).some(b=>String(b.supplier||"").trim().toLocaleLowerCase()===key)).length;}
 function renderSuppliers(){
  const term=$("supplierSearch").value.trim().toLocaleLowerCase();
  const list=suppliers.filter(x=>[x.name,x.phone,x.phone2,x.address,x.contact].join(" ").toLocaleLowerCase().includes(term)).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
