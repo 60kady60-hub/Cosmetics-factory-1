@@ -499,7 +499,7 @@ function supplierItemCount(name){const key=name.trim().toLocaleLowerCase();retur
 function renderSuppliers(){
  const term=$("supplierSearch").value.trim().toLocaleLowerCase();
  const list=suppliers.filter(x=>[x.name,x.phone,x.phone2,x.address,x.contact].join(" ").toLocaleLowerCase().includes(term)).sort((a,b)=>a.name.localeCompare(b.name,"ar"));
- $("suppliersRows").innerHTML=list.length?list.map(x=>'<tr><td><strong>'+esc(x.name)+'</strong></td><td>'+esc(x.phone||"—")+(x.phone2?'<br>'+esc(x.phone2):"")+'</td><td>'+esc(x.address||"—")+'</td><td>'+esc(x.purchaseMethod||"—")+'</td><td>'+supplierItemCount(x.name)+'</td><td><div class="actions"><button class="secondary" type="button" data-supplier-edit="'+esc(x.id)+'">تعديل</button><button class="secondary" type="button" data-supplier-delete="'+esc(x.id)+'">حذف</button></div></td></tr>').join(""):'<tr><td colspan="6" class="empty">لا يوجد موردون مسجلون. اضغط «إضافة مورد جديد» للبدء.</td></tr>';
+ $("suppliersRows").innerHTML=list.length?list.map(x=>'<tr><td><strong>'+esc(x.name)+'</strong></td><td>'+esc(x.phone||"—")+(x.phone2?'<br>'+esc(x.phone2):"")+'</td><td>'+esc(x.address||"—")+'</td><td>'+esc(x.purchaseMethod||"—")+'</td><td>'+supplierItemCount(x.name)+'</td><td><div class="actions"><button class="secondary" type="button" data-supplier-edit="'+esc(x.id)+'">تعديل</button></div></td></tr>').join(""):'<tr><td colspan="6" class="empty">لا يوجد موردون مسجلون. اضغط «إضافة مورد جديد» للبدء.</td></tr>';
 }
 function openSupplierForm(x){
  editingSupplierId=x?x.id:null;$("supplierModalTitle").textContent=x?"تعديل بيانات المورد":"إضافة مورد جديد";
@@ -509,9 +509,9 @@ $("addSupplierBtn").onclick=()=>openSupplierForm(null);
 $("cancelSupplier").onclick=()=>$("supplierModal").classList.remove("show");
 $("supplierSearch").oninput=renderSuppliers;
 $("suppliersRows").addEventListener("click",e=>{
- const edit=e.target.closest("[data-supplier-edit]"),del=e.target.closest("[data-supplier-delete]");
+ const edit=e.target.closest("[data-supplier-edit]");
  if(edit){const x=suppliers.find(z=>z.id===edit.dataset.supplierEdit);if(x)openSupplierForm(x);}
- if(del){const x=suppliers.find(z=>z.id===del.dataset.supplierDelete);if(!x)return;const linked=supplierItemCount(x.name);if(linked){alert("لا يمكن حذف المورد لأنه مرتبط بأصناف في المخزن. يمكنك تعديل بياناته بدلًا من حذفه.");return;}if(confirm("هل تريد حذف المورد «"+x.name+"»؟")){suppliers=suppliers.filter(z=>z.id!==x.id);if(!saveSuppliers())alert("تعذر حفظ الحذف على هذا الجهاز.");renderSuppliers();}}
+
 });
 $("supplierForm").onsubmit=e=>{
  e.preventDefault();const name=$("supplierName").value.trim(),phone=$("supplierPhone").value.trim();
