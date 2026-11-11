@@ -85,7 +85,8 @@ body.welcome-mode>header,body.welcome-mode>#mainNav,body.welcome-mode>main,body.
 body.welcome-mode #welcomeScreen{display:flex}
 .welcome-brand{appearance:none;border:0;background:transparent;color:#33224b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;width:min(100%,420px);min-height:50vh;cursor:pointer;text-align:center;padding:28px}
 .welcome-logo{display:block;width:clamp(158px,43vw,218px);height:auto;overflow:visible;animation:flaskFloat 3.8s ease-in-out infinite;filter:drop-shadow(0 18px 24px #6e579333)}
-.welcome-brand strong{font-size:clamp(38px,10vw,54px);font-weight:850;letter-spacing:5px;line-height:1.05;color:#493260}
+.welcome-brand .welcome-wordmark{font-family:Georgia,"Times New Roman",serif;font-size:clamp(25px,7vw,34px);font-weight:600;font-style:italic;letter-spacing:1.5px;line-height:1.2;color:#493260;text-transform:capitalize;text-shadow:0 2px 12px #8b75a522}
+.welcome-brand .welcome-wordmark:after{content:"";display:block;width:54px;height:2px;margin:10px auto 0;border-radius:2px;background:linear-gradient(90deg,#9bcfc0,#a98bc9)}
 .welcome-brand span{font-size:clamp(16px,4vw,21px);font-weight:750;letter-spacing:6px;color:#648f83}
 @keyframes flaskFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @media(prefers-reduced-motion:reduce){.welcome-logo{animation:none}}
@@ -109,6 +110,7 @@ body.welcome-mode #welcomeScreen{display:flex}
    <path d="M91 143c-12 22-21 39-19 51" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".78"/>
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
+  <strong class="welcome-wordmark">Ayla Cosmetics</strong>
  </button>
 </section>
 <header><h1>نظام إدارة مصنع الكوزماتكس</h1><p>نسخة أولية لإدارة المخازن — تعمل محلياً على هذا الجهاز</p></header>
