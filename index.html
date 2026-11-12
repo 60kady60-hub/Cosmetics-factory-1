@@ -129,6 +129,12 @@ body.dashboard-mode #departmentScreen{display:flex}
 @media(max-width:700px){.department-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.department-card{min-height:176px;padding:16px;border-radius:16px}.department-card strong{font-size:17px}.department-card small{font-size:11px}}
 @media(max-width:390px){.department-grid{gap:8px}.department-card{padding:13px;min-height:170px}.department-icon{width:42px;height:42px;font-size:22px}}
 @media(prefers-reduced-motion:reduce){.department-card{transition:none}.department-card:hover{transform:none}}
+
+/* V52: iPhone-style right-edge swipe back for RTL navigation. */
+body.edge-back-active{overscroll-behavior-x:contain}
+#edgeBackHint{position:fixed;z-index:1000;right:0;top:50%;transform:translate(100%,-50%);width:42px;height:76px;border-radius:18px 0 0 18px;background:#173b35;color:#fff;display:grid;place-items:center;font-size:24px;box-shadow:0 4px 18px #0002;opacity:0;pointer-events:none;transition:transform .16s ease,opacity .16s ease}
+#edgeBackHint.visible{transform:translate(0,-50%);opacity:.9}
+@media(prefers-reduced-motion:reduce){#edgeBackHint{transition:none}}
 </style>
 </head>
 <body class="welcome-mode">
@@ -147,7 +153,7 @@ body.dashboard-mode #departmentScreen{display:flex}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V51">VERSION V51</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V52">VERSION V52</span>
  </button>
 </section>
 
@@ -790,4 +796,51 @@ if("serviceWorker" in navigator){
  grid.addEventListener("pointercancel",finish);
 })();</script>
 
+
+<script>
+// V52: الرجوع بالسحب من الحافة اليمنى مثل iPhone، مع دعم سجل الأقسام والنوافذ.
+(()=>{
+ const nav=document.getElementById("mainNav");
+ const backButton=document.getElementById("backToDepartments");
+ if(!nav||!backButton)return;
+ const stack=[];let returning=false;
+ const activeTab=()=>nav.querySelector("[data-main].active");
+ const hint=document.createElement("div");hint.id="edgeBackHint";hint.setAttribute("aria-hidden","true");hint.textContent="‹";document.body.appendChild(hint);
+ nav.addEventListener("click",e=>{
+  const tab=e.target.closest("[data-main]");if(!tab)return;
+  if(returning){returning=false;return;}
+  const previous=stack[stack.length-1];
+  if(previous!==tab.dataset.main)stack.push(tab.dataset.main);
+ });
+ const goBack=()=>{
+  const modal=document.querySelector(".modal.show");
+  if(modal){modal.classList.remove("show");return true;}
+  if(!document.body.classList.contains("app-mode"))return false;
+  if(stack.length>1){
+   stack.pop();const previous=stack[stack.length-1];const tab=nav.querySelector('[data-main="'+CSS.escape(previous)+'"]');
+   if(tab){returning=true;tab.click();return true;}
+  }
+  backButton.click();stack.length=0;return true;
+ };
+ let start=null,tracking=false;
+ const reset=()=>{start=null;tracking=false;hint.classList.remove("visible");};
+ document.addEventListener("pointerdown",e=>{
+  if(e.pointerType==="mouse"||e.button!==0||!document.body.classList.contains("app-mode"))return;
+  if(e.clientX>innerWidth-26){start={x:e.clientX,y:e.clientY,id:e.pointerId};tracking=true;}
+ },{passive:true});
+ document.addEventListener("pointermove",e=>{
+  if(!tracking||!start||e.pointerId!==start.id)return;
+  const dx=e.clientX-start.x,dy=e.clientY-start.y;
+  if(dx<-12&&Math.abs(dx)>Math.abs(dy)*1.15){hint.classList.add("visible");if(e.cancelable)e.preventDefault();}
+ },{passive:false});
+ document.addEventListener("pointerup",e=>{
+  if(!tracking||!start||e.pointerId!==start.id)return;
+  const dx=e.clientX-start.x,dy=e.clientY-start.y;
+  const shouldGoBack=dx<=-72&&Math.abs(dx)>Math.abs(dy)*1.25;
+  reset();if(shouldGoBack)goBack();
+ },{passive:true});
+ document.addEventListener("pointercancel",reset,{passive:true});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden)reset();});
+})();
+</script>
 </body></html>
