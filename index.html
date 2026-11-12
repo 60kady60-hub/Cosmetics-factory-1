@@ -94,6 +94,36 @@ body.welcome-mode #welcomeScreen{display:flex}
 
 
  .welcome-version{display:inline-flex;align-items:center;justify-content:center;margin-top:1px;padding:6px 13px;border:1px solid #c9b7df;border-radius:999px;background:#ffffff88;color:#70578f;font:700 11px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:2px;box-shadow:0 4px 14px #6e57931a}
+
+/* لوحة موحدة لإدارات المصنع */
+:root{--mint:#b9d9cc;--gold:#d8ad5c;--bg:#f3f6f4;--green:#173b35;--green2:#24594f}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--mint);border-color:var(--green2)}
+.badge{background:#e5f0eb;color:var(--green)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#backToDepartments{display:none;flex:0 0 auto}
+body.app-mode #backToDepartments{display:inline-flex}
+body.welcome-mode>header,body.welcome-mode>#mainNav,body.welcome-mode>main,body.welcome-mode>footer,body.welcome-mode>#saveStatus,
+body.dashboard-mode>header,body.dashboard-mode>#mainNav,body.dashboard-mode>main,body.dashboard-mode>footer,body.dashboard-mode>#saveStatus{display:none!important}
+#departmentScreen{display:none;min-height:100svh;min-height:100dvh;padding:clamp(22px,5vw,54px) 18px;background:linear-gradient(145deg,#f3f6f4 0%,#edf4f0 58%,#e6eee9 100%);align-items:center;justify-content:center}
+body.dashboard-mode #departmentScreen{display:flex}
+.department-shell{width:min(100%,1000px);margin:auto}
+.department-heading{text-align:center;margin:0 0 28px}
+.department-eyebrow{font-size:11px;letter-spacing:4px;font-weight:800;color:#648f83}
+.department-heading h1{font-size:clamp(27px,5vw,38px);color:var(--green);margin:8px 0}
+.department-heading p{color:var(--muted);margin:0;font-size:14px}
+.department-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.department-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:190px;padding:21px;border:1px solid #dce8e1;border-radius:19px;background:linear-gradient(160deg,#fff 0%,#f9fcfa 100%);color:var(--text);text-align:right;cursor:pointer;box-shadow:0 8px 24px #173b350b;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.department-card:hover{transform:translateY(-3px);border-color:#a9cbbd;box-shadow:0 13px 28px #173b3515}
+.department-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#e8f2ed;font-size:25px}
+.department-card strong{font-size:19px;color:var(--green)}
+.department-card small{font-size:12px;line-height:1.7;color:var(--muted)}
+.department-open{margin-top:auto;color:var(--green2);font-size:12px;font-weight:800}
+.department-status{position:absolute;left:15px;top:16px;border-radius:20px;padding:5px 9px;background:#fff5df;color:#88651f;font-size:10px;font-weight:800}
+.department-footnote{text-align:center;color:var(--muted);font-size:12px;line-height:1.8;margin:20px 0 0}
+@media(max-width:700px){.department-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.department-card{min-height:176px;padding:16px;border-radius:16px}.department-card strong{font-size:17px}.department-card small{font-size:11px}}
+@media(max-width:390px){.department-grid{gap:8px}.department-card{padding:13px;min-height:170px}.department-icon{width:42px;height:42px;font-size:22px}}
+@media(prefers-reduced-motion:reduce){.department-card{transition:none}.department-card:hover{transform:none}}
 </style>
 </head>
 <body class="welcome-mode">
@@ -115,7 +145,35 @@ body.welcome-mode #welcomeScreen{display:flex}
   <span class="welcome-version" aria-label="إصدار البرنامج V46">VERSION V46</span>
  </button>
 </section>
-<header><h1>نظام إدارة مصنع الكوزماتكس</h1><p>نسخة أولية لإدارة المخازن — تعمل محلياً على هذا الجهاز</p></header>
+
+<section id="departmentScreen" aria-label="إدارات المصنع">
+ <div class="department-shell">
+  <div class="department-heading">
+   <span class="department-eyebrow">AYLA COSMETICS</span>
+   <h1>إدارات المصنع</h1>
+   <p>اختار الإدارة اللي عايز تشتغل عليها</p>
+  </div>
+  <div class="department-grid">
+   <button class="department-card" type="button" data-department="warehouses">
+    <span class="department-icon">📦</span><strong>المخازن</strong><small>إدارة الخامات والتعبئة والمنتجات النهائية</small><span class="department-open">دخول الإدارة ←</span>
+   </button>
+   <button class="department-card" type="button" data-department="production">
+    <span class="department-icon">🧪</span><strong>التصنيع</strong><small>متابعة وتشغيل عمليات التصنيع</small><span class="department-status">قريبًا</span><span class="department-open">عرض القسم ←</span>
+   </button>
+   <button class="department-card" type="button" data-department="purchases">
+    <span class="department-icon">🛒</span><strong>المشتريات</strong><small>إدارة الموردين وعمليات الشراء</small><span class="department-open">دخول الإدارة ←</span>
+   </button>
+   <button class="department-card" type="button" data-department="sales">
+    <span class="department-icon">💰</span><strong>المبيعات</strong><small>إدارة ومتابعة عمليات البيع</small><span class="department-status">قريبًا</span><span class="department-open">عرض القسم ←</span>
+   </button>
+   <button class="department-card" type="button" data-department="reports">
+    <span class="department-icon">📊</span><strong>التقارير</strong><small>تقارير ومؤشرات أداء المصنع</small><span class="department-status">قريبًا</span><span class="department-open">عرض القسم ←</span>
+   </button>
+  </div>
+  <p class="department-footnote">الأقسام الموضّح عليها «قريبًا» ظاهرة في التصميم وسيتم تفعيلها في مراحل لاحقة.</p>
+ </div>
+</section>
+<header><div><h1>نظام إدارة مصنع الكوزماتكس</h1><p>نسخة أولية لإدارة المخازن — تعمل محلياً على هذا الجهاز</p></div><button class="secondary" id="backToDepartments" type="button">← الإدارات</button></header>
 <nav id="mainNav" aria-label="القائمة الرئيسية">
  <button class="tab active" data-main="warehouses" draggable="true">📦 المخازن</button>
  <button class="tab" data-main="production" draggable="true">🧪 التصنيع</button>
@@ -611,6 +669,20 @@ try{render();}catch(err){console.error("تعذر عرض بيانات المخز�
 <script>
 document.getElementById("enterFactory").addEventListener("click",()=>{
  document.body.classList.remove("welcome-mode");
+ document.body.classList.add("dashboard-mode");
+});
+document.querySelectorAll("[data-department]").forEach(card=>{
+ card.addEventListener("click",()=>{
+  const target=document.querySelector('[data-main="'+card.dataset.department+'"]');
+  if(!target)return;
+  document.body.classList.remove("dashboard-mode");
+  document.body.classList.add("app-mode");
+  target.click();
+ });
+});
+document.getElementById("backToDepartments").addEventListener("click",()=>{
+ document.body.classList.remove("app-mode");
+ document.body.classList.add("dashboard-mode");
 });
 </script>
 <script>
