@@ -112,7 +112,7 @@ body.dashboard-mode #departmentScreen{display:flex}
 .department-eyebrow{font-size:11px;letter-spacing:4px;font-weight:800;color:#648f83}
 .department-heading h1{font-size:clamp(27px,5vw,38px);color:var(--green);margin:8px 0}
 .department-heading p{color:var(--muted);margin:0;font-size:14px}
-.department-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.department-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.department-card.is-reordering{opacity:.58;outline:2px dashed var(--gold);outline-offset:3px;transform:scale(.98);touch-action:none}.department-card.is-drag-target{border-color:var(--gold);box-shadow:0 0 0 3px #d8ad5c33}
 .department-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:190px;padding:21px;border:1px solid #dce8e1;border-radius:19px;background:linear-gradient(160deg,#fff 0%,#f9fcfa 100%);color:var(--text);text-align:right;cursor:pointer;box-shadow:0 8px 24px #173b350b;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
 .department-card:hover{transform:translateY(-3px);border-color:#a9cbbd;box-shadow:0 13px 28px #173b3515}
 .department-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#e8f2ed;font-size:25px}
@@ -142,7 +142,7 @@ body.dashboard-mode #departmentScreen{display:flex}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V49">VERSION V49</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V50">VERSION V50</span>
  </button>
 </section>
 
@@ -725,4 +725,62 @@ if("serviceWorker" in navigator){
  });
 }
 </script>
+
+<script>
+// ترتيب بطاقات الإدارات بالسحب بعد ضغطة مطولة، مع حفظ الترتيب على نفس الجهاز.
+(()=>{
+ const grid=document.querySelector(".department-grid");
+ if(!grid)return;
+ const key="cosmetics_department_order_v1";
+ const cards=()=>[...grid.querySelectorAll(".department-card")];
+ try{
+  const saved=JSON.parse(localStorage.getItem(key)||"[]");
+  saved.forEach(id=>{const card=cards().find(x=>(x.dataset.department||x.querySelector("strong")?.textContent)===id);if(card)grid.appendChild(card);});
+ }catch{}
+ const persist=()=>{try{localStorage.setItem(key,JSON.stringify(cards().map(x=>x.dataset.department||x.querySelector("strong")?.textContent)));}catch{}};
+ let candidate=null,active=null,timer=null,startX=0,startY=0,lastTarget=null,moved=false,suppressClick=false;
+ const clear=()=>{if(timer)clearTimeout(timer);timer=null;};
+ grid.addEventListener("pointerdown",e=>{
+  if(e.pointerType==="mouse"&&e.button!==0)return;
+  const card=e.target.closest(".department-card");
+  if(!card||!grid.contains(card))return;
+  candidate=card;startX=e.clientX;startY=e.clientY;moved=false;
+  clear();
+  timer=setTimeout(()=>{
+   if(!candidate)return;
+   active=candidate;active.classList.add("is-reordering");
+   if(navigator.vibrate)navigator.vibrate(18);
+   try{active.setPointerCapture(e.pointerId);}catch{}
+  },420);
+ },{passive:true});
+ grid.addEventListener("pointermove",e=>{
+  if(!candidate)return;
+  if(!active&&Math.hypot(e.clientX-startX,e.clientY-startY)>10){clear();candidate=null;return;}
+  if(!active)return;
+  e.preventDefault();moved=true;
+  const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest(".department-card");
+  if(!hit||hit===active||!grid.contains(hit))return;
+  if(lastTarget&&lastTarget!==hit)lastTarget.classList.remove("is-drag-target");
+  lastTarget=hit;hit.classList.add("is-drag-target");
+  const r=hit.getBoundingClientRect();
+  const after=e.clientY>r.top+r.height/2;
+  grid.insertBefore(active,after?hit.nextSibling:hit);
+ },{passive:false});
+ const finish=()=>{
+  clear();
+  if(lastTarget)lastTarget.classList.remove("is-drag-target");
+  if(active){
+   active.classList.remove("is-reordering");
+   if(moved){persist();suppressClick=true;setTimeout(()=>suppressClick=false,350);}
+  }
+  candidate=null;active=null;lastTarget=null;moved=false;
+ };
+ grid.addEventListener("pointerup",finish);
+ grid.addEventListener("pointercancel",finish);
+ grid.addEventListener("click",e=>{
+  if(suppressClick){e.preventDefault();e.stopImmediatePropagation();suppressClick=false;}
+ },true);
+})();
+</script>
+
 </body></html>
