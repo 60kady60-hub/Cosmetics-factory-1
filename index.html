@@ -153,7 +153,7 @@ body.edge-back-active{overscroll-behavior-x:contain}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V52">VERSION V52</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V53">VERSION V53</span>
  </button>
 </section>
 
@@ -798,49 +798,85 @@ if("serviceWorker" in navigator){
 
 
 <script>
-// V52: الرجوع بالسحب من الحافة اليمنى مثل iPhone، مع دعم سجل الأقسام والنوافذ.
+// V53: cross-platform RTL edge-swipe back (Touch Events + Pointer fallback).
 (()=>{
  const nav=document.getElementById("mainNav");
  const backButton=document.getElementById("backToDepartments");
  if(!nav||!backButton)return;
- const stack=[];let returning=false;
- const activeTab=()=>nav.querySelector("[data-main].active");
- const hint=document.createElement("div");hint.id="edgeBackHint";hint.setAttribute("aria-hidden","true");hint.textContent="‹";document.body.appendChild(hint);
+ const stack=["warehouses"];
+ let returning=false;
+ const hint=document.createElement("div");
+ hint.id="edgeBackHint";hint.setAttribute("aria-hidden","true");hint.textContent="‹";
+ document.body.appendChild(hint);
  nav.addEventListener("click",e=>{
   const tab=e.target.closest("[data-main]");if(!tab)return;
+  const key=tab.dataset.main;
   if(returning){returning=false;return;}
-  const previous=stack[stack.length-1];
-  if(previous!==tab.dataset.main)stack.push(tab.dataset.main);
+  if(stack[stack.length-1]!==key)stack.push(key);
  });
  const goBack=()=>{
   const modal=document.querySelector(".modal.show");
-  if(modal){modal.classList.remove("show");return true;}
+  if(modal){
+   const close=modal.querySelector('[data-close],.close-modal,[aria-label="إغلاق"],button.secondary');
+   if(close)close.click();else modal.classList.remove("show");
+   return true;
+  }
   if(!document.body.classList.contains("app-mode"))return false;
   if(stack.length>1){
-   stack.pop();const previous=stack[stack.length-1];const tab=nav.querySelector('[data-main="'+CSS.escape(previous)+'"]');
+   stack.pop();
+   const previous=stack[stack.length-1];
+   const tab=nav.querySelector('[data-main="'+CSS.escape(previous)+'"]');
    if(tab){returning=true;tab.click();return true;}
   }
-  backButton.click();stack.length=0;return true;
+  backButton.click();stack.length=1;return true;
  };
+ const edgeWidth=44,threshold=64;
  let start=null,tracking=false;
- const reset=()=>{start=null;tracking=false;hint.classList.remove("visible");};
+ const reset=()=>{
+  start=null;tracking=false;hint.classList.remove("visible");
+ };
+ const begin=(x,y,id)=>{
+  if(!document.body.classList.contains("app-mode")||x<innerWidth-edgeWidth)return false;
+  start={x,y,id};tracking=true;return true;
+ };
+ const move=(x,y,id,event)=>{
+  if(!tracking||!start||id!==start.id)return;
+  const dx=x-start.x,dy=y-start.y;
+  if(dx<-8&&Math.abs(dx)>Math.abs(dy)*1.1){
+   hint.classList.add("visible");
+   if(event&&event.cancelable)event.preventDefault();
+  }
+ };
+ const end=(x,y,id)=>{
+  if(!tracking||!start||id!==start.id)return;
+  const dx=x-start.x,dy=y-start.y;
+  const shouldGoBack=dx<=-threshold&&Math.abs(dx)>Math.abs(dy)*1.2;
+  reset();if(shouldGoBack)goBack();
+ };
+ document.addEventListener("touchstart",e=>{
+  if(e.touches.length!==1)return;
+  const t=e.touches[0];begin(t.clientX,t.clientY,t.identifier);
+ },{passive:true});
+ document.addEventListener("touchmove",e=>{
+  if(!tracking||e.touches.length!==1)return;
+  const t=e.touches[0];move(t.clientX,t.clientY,t.identifier,e);
+ },{passive:false});
+ document.addEventListener("touchend",e=>{
+  if(!tracking||!start)return;
+  const t=[...e.changedTouches].find(x=>x.identifier===start.id);
+  if(t)end(t.clientX,t.clientY,t.identifier);else reset();
+ },{passive:true});
+ document.addEventListener("touchcancel",reset,{passive:true});
  document.addEventListener("pointerdown",e=>{
-  if(e.pointerType==="mouse"||e.button!==0||!document.body.classList.contains("app-mode"))return;
-  if(e.clientX>innerWidth-26){start={x:e.clientX,y:e.clientY,id:e.pointerId};tracking=true;}
+  if(e.pointerType==="mouse"||e.button!==0)return;
+  if(!tracking)begin(e.clientX,e.clientY,e.pointerId);
  },{passive:true});
  document.addEventListener("pointermove",e=>{
   if(!tracking||!start||e.pointerId!==start.id)return;
-  const dx=e.clientX-start.x,dy=e.clientY-start.y;
-  if(dx<-12&&Math.abs(dx)>Math.abs(dy)*1.15){hint.classList.add("visible");if(e.cancelable)e.preventDefault();}
+  move(e.clientX,e.clientY,e.pointerId,e);
  },{passive:false});
- document.addEventListener("pointerup",e=>{
-  if(!tracking||!start||e.pointerId!==start.id)return;
-  const dx=e.clientX-start.x,dy=e.clientY-start.y;
-  const shouldGoBack=dx<=-72&&Math.abs(dx)>Math.abs(dy)*1.25;
-  reset();if(shouldGoBack)goBack();
- },{passive:true});
+ document.addEventListener("pointerup",e=>end(e.clientX,e.clientY,e.pointerId),{passive:true});
  document.addEventListener("pointercancel",reset,{passive:true});
  document.addEventListener("visibilitychange",()=>{if(document.hidden)reset();});
-})();
-</script>
+})();</script>
 </body></html>
