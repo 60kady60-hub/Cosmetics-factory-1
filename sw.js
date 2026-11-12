@@ -1,4 +1,4 @@
-const CACHE="cosmetics-app-v49";
+const CACHE="cosmetics-app-v50";
 const FILES=["./","./index.html","./manifest.webmanifest","./icon.svg"];
 self.addEventListener("install",event=>{
  event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES)).then(()=>self.skipWaiting()));
