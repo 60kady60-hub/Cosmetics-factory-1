@@ -758,7 +758,8 @@ if("serviceWorker" in navigator){
   const r=hit.getBoundingClientRect();
   const dx=Math.abs(x-(r.left+r.width/2))/Math.max(r.width,1);
   const dy=Math.abs(y-(r.top+r.height/2))/Math.max(r.height,1);
-  const before=dx>dy ? x<r.left+r.width/2 : y<r.top+r.height/2;
+  const rtl=getComputedStyle(grid).direction==="rtl";
+  const before=dx>dy ? (rtl?x>r.left+r.width/2:x<r.left+r.width/2) : y<r.top+r.height/2;
   grid.insertBefore(active,before?hit:hit.nextSibling);
  };
  grid.addEventListener("pointerdown",e=>{
