@@ -153,7 +153,7 @@ body.edge-back-active{overscroll-behavior-x:contain}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V60">VERSION V62</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V60">VERSION V63</span>
  </button>
 </section>
 
@@ -536,7 +536,7 @@ function openEditItem(id){
  refreshSupplierOptions(x.supplier||"");$("expiry").value="";$("notes").value=x.notes||"";
  ["quantity","expiry","notes"].forEach(id=>$(id).disabled=true);$("supplier").disabled=false;$("minStock").disabled=false;
  $("nameEn").disabled=false;$("nameAr").disabled=false;$("unit").disabled=false;$("price").disabled=false;
- ["quantity","expiry","notes","invoiceNumber"].forEach(id=>$(id).closest(".field").hidden=true);$("supplier").closest(".field").hidden=false;$("minStock").closest(".field").hidden=false;
+ ["expiry","notes","invoiceNumber"].forEach(id=>$(id).closest(".field").hidden=true);$("quantity").closest(".field").hidden=false;$("supplier").closest(".field").hidden=false;$("minStock").closest(".field").hidden=false;
  $("similar").hidden=true;$("expiryError").hidden=true;$("expiryError").textContent="";
  showModal();
 }
