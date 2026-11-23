@@ -354,9 +354,9 @@ window.toggleItemDetails=id=>{if(typeof longPressFired!=="undefined"&&longPressF
 window.chooseMovementView=(id,view)=>{movementChoiceItemId=String(id);movementView=view;render();};
 function render(){
  const list=items().slice().sort((a,b)=>primaryName(a).localeCompare(primaryName(b),"en",{sensitivity:"base",numeric:true})||String(a.id).localeCompare(String(b.id))), term=$("search").value.trim().toLocaleLowerCase();
- const normalizeInvoice=v=>String(v??"").replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[\\s\\u200e\\u200f]/g,"").toLocaleLowerCase();
+ const normalizeInvoice=v=>String(v??"").replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[\s\u200e\u200f]/g,"").toLocaleLowerCase();
  const invoiceTerm=normalizeInvoice(term);
- const invoiceMatches=invoiceTerm?list.filter(x=>(x.batches||[]).some((b,i)=>{const number=normalizeInvoice(b.invoiceNumber||(i===0?x.invoiceNumber:"")||"");return number&&number.includes(invoiceTerm);})||(!(x.batches||[]).length&&normalizeInvoice(x.invoiceNumber||"").includes(invoiceTerm))):[];
+ const invoiceMatches=invoiceTerm?list.filter(x=>normalizeInvoice(x.invoiceNumber||"").includes(invoiceTerm)||(x.batches||[]).some(b=>normalizeInvoice(b.invoiceNumber||"").includes(invoiceTerm))):[];
  const filtered=invoiceMatches.length?invoiceMatches:list.filter(x=>(primaryName(x)+" "+secondaryName(x)+" "+(x.supplier||"")+" "+(x.batches||[]).map(b=>b.supplier||"").join(" ")).toLocaleLowerCase().includes(term));
  $("rows").innerHTML=filtered.length?filtered.map(x=>{
   const q=x.batches.reduce((s,b)=>s+Number(b.qty),0);
