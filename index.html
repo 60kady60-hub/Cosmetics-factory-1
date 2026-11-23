@@ -153,7 +153,7 @@ body.edge-back-active{overscroll-behavior-x:contain}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V60">VERSION V63</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V60">VERSION V64</span>
  </button>
 </section>
 
@@ -534,7 +534,7 @@ function openEditItem(id){
  $("unit").value=x.unit||"كيلو";$("quantity").value=totalStock(x).toFixed(3);$("quantity").disabled=false;$("quantity").min="0";$("quantity").required=false;$("qtyLabel").textContent="تعديل رصيد الصنف *";$("editBalanceField").hidden=false;$("editBalanceHint").textContent="الرصيد الحالي: "+totalStock(x).toLocaleString("en-US",{maximumFractionDigits:3})+" "+x.unit+" — أدخل الرصيد الجديد."; $("quantity").closest(".field").hidden=false;
  $("minStock").value=x.minStock??"";$("price").value=weighted(x).toFixed(2);
  refreshSupplierOptions(x.supplier||"");$("expiry").value="";$("notes").value=x.notes||"";
- ["quantity","expiry","notes"].forEach(id=>$(id).disabled=true);$("supplier").disabled=false;$("minStock").disabled=false;
+ ["expiry","notes"].forEach(id=>$(id).disabled=true);$("quantity").disabled=false;$("supplier").disabled=false;$("minStock").disabled=false;
  $("nameEn").disabled=false;$("nameAr").disabled=false;$("unit").disabled=false;$("price").disabled=false;
  ["expiry","notes","invoiceNumber"].forEach(id=>$(id).closest(".field").hidden=true);$("quantity").closest(".field").hidden=false;$("supplier").closest(".field").hidden=false;$("minStock").closest(".field").hidden=false;
  $("similar").hidden=true;$("expiryError").hidden=true;$("expiryError").textContent="";
