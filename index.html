@@ -153,7 +153,7 @@ body.edge-back-active{overscroll-behavior-x:contain}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V53">VERSION V53</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V54">VERSION V54</span>
  </button>
 </section>
 
@@ -273,6 +273,7 @@ body.edge-back-active{overscroll-behavior-x:contain}
  <div class="field"><label>سعر الوحدة (جنيه) *</label><input id="price" type="number" min="0.01" step="0.01" required value=""></div>
  <div class="field"><label for="supplier">الشركة / المورد *</label><select id="supplier" required><option value="">اختر المورد من قائمة المشتريات</option></select></div>
  <div class="field"><label>تاريخ الصلاحية *</label><input id="expiry" type="date" required></div>
+ <div class="field"><label for="invoiceNumber">رقم الفاتورة (اختياري)</label><input id="invoiceNumber" type="text" maxlength="80" autocomplete="off" placeholder="اكتب رقم الفاتورة إن وجد"></div>
  <div class="field full"><label>ملاحظات</label><textarea id="notes" rows="2" placeholder="اختياري"></textarea></div>
 </div>
 <div id="similar" class="notice" hidden></div>
@@ -435,8 +436,8 @@ $('rows').addEventListener('contextmenu',e=>{
 });
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function showModal(){ $("modal").classList.add("show"); }
-function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("nameEn").disabled=false; $("nameAr").disabled=false; $("unit").disabled=false;["quantity","minStock","price","supplier","expiry","notes"].forEach(id=>$(id).disabled=false);["quantity","minStock","supplier","expiry","notes"].forEach(id=>$(id).closest(".field").hidden=false); $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; addingMode="new"; }
-$("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";$("minStock").value="";$("minStock").disabled=false;refreshSupplierOptions("");showModal()};
+function closeModal(){ $("modal").classList.remove("show"); $("itemForm").reset(); $("nameEn").disabled=false; $("nameAr").disabled=false; $("unit").disabled=false;["quantity","minStock","price","supplier","expiry","notes","invoiceNumber"].forEach(id=>$(id).disabled=false);["quantity","minStock","supplier","expiry","notes","invoiceNumber"].forEach(id=>$(id).closest(".field").hidden=false); $("similar").hidden=true; $("expiryError").hidden=true; $("expiryError").textContent=""; editId=null; addingMode="new"; }
+$("addItem").onclick=()=>{addingMode="new";editId=null;$("modalTitle").textContent="إضافة صنف جديد — "+labels[current];$("qtyLabel").textContent="الرصيد الافتتاحي";$("minStock").value="";$("minStock").disabled=false;$("invoiceNumber").value="";$("invoiceNumber").closest(".field").hidden=false;refreshSupplierOptions("");showModal()};
 $("guideBell").onclick=()=>$("guideModal").classList.add("show");$("closeGuide").onclick=()=>$("guideModal").classList.remove("show");$("guideModal").addEventListener("click",e=>{if(e.target===$("guideModal"))$("guideModal").classList.remove("show")});
 $("cancel").onclick=closeModal;
 let selectedIssueItemId=null;
@@ -596,10 +597,10 @@ $("itemForm").onsubmit=e=>{e.preventDefault();
  const originalDataSnapshot=JSON.stringify(data);
  let qty=Number($("quantity").value),price=unitPrice;let batch={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),date:new Date().toISOString().slice(0,10),qty,price,supplier:$("supplier").value.trim(),expiry:$("expiry").value,notes:$("notes").value.trim(),type:addingMode==="batch"?"إضافة كمية":"رصيد افتتاحي"};
  if(editId){let x=data.find(x=>x.id===editId);if(addingMode==="batch"){const oldQty=totalStock(x),oldAverage=weighted(x);x.batches.push(batch);if(oldQty+qty>0)x.averagePriceOverride=((oldQty*oldAverage)+(qty*price))/(oldQty+qty);}else if(addingMode==="editDetails"){x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;const oldUnit=x.unit;if(oldUnit!==$("unit").value){(x.batches||[]).forEach(b=>{if(!b.unitSnapshot)b.unitSnapshot=oldUnit;});(x.issues||[]).forEach(issue=>{if(!issue.unitSnapshot)issue.unitSnapshot=oldUnit;});}x.unit=$("unit").value;x.averagePriceOverride=price;x.minStock=minStock;x.supplier=$("supplier").value.trim();}else{x.name=nameEn;x.nameEn=nameEn;x.nameAr=nameAr;x.unit=$("unit").value;x.supplier=$("supplier").value.trim();x.notes=$("notes").value.trim();if(x.batches.length===0&&qty>0)x.batches.push(batch);}}
- else {const entered=[normalizedName(nameEn),normalizedName(nameAr)];const same=data.find(x=>x.warehouse===current&&[x.nameEn,x.nameAr,x.name].some(v=>entered.includes(normalizedName(v))));if(same){alert("هذا الاسم العربي أو الإنجليزي مسجل بالفعل للصنف «"+primaryName(same)+"». استخدم زر «＋ إضافة كمية جديدة» بدل إنشاء صنف مكرر.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name:nameEn,nameEn:nameEn,nameAr:nameAr,unit:$("unit").value,supplier:$("supplier").value.trim(),notes:$("notes").value.trim(),minStock:minStock,batches:qty>0?[batch]:[]});}
+ else {const entered=[normalizedName(nameEn),normalizedName(nameAr)];const same=data.find(x=>x.warehouse===current&&[x.nameEn,x.nameAr,x.name].some(v=>entered.includes(normalizedName(v))));if(same){alert("هذا الاسم العربي أو الإنجليزي مسجل بالفعل للصنف «"+primaryName(same)+"». استخدم زر «＋ إضافة كمية جديدة» بدل إنشاء صنف مكرر.");return;}data.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),warehouse:current,name:nameEn,nameEn:nameEn,nameAr:nameAr,unit:$("unit").value,supplier:$("supplier").value.trim(),invoiceNumber:$("invoiceNumber").value.trim(),notes:$("notes").value.trim(),minStock:minStock,batches:qty>0?[batch]:[]});}
  const saveConfirmed=save();if(!saveConfirmed){data.splice(0,data.length,...JSON.parse(originalDataSnapshot));render();alert("تعذّر تأكيد حفظ التعديل على هذا الجهاز. تم إرجاع بيانات الصنف كما كانت، والنافذة ستظل مفتوحة حتى تعيد المحاولة.");return;}closeModal();render();
 };
-window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("modalTitle").textContent="إضافة دفعة / كمية إلى "+primaryName(x);$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=true;$("nameAr").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("minStock").value=x.minStock??"";$("minStock").disabled=true;$("price").value=weighted(x).toFixed(2);refreshSupplierOptions(x.supplier||"");$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
+window.addBatch=id=>{let x=data.find(x=>x.id===id);expandedItemId=String(id);editId=id;addingMode="batch";$("invoiceNumber").value="";$("invoiceNumber").closest(".field").hidden=true;$("modalTitle").textContent="إضافة دفعة / كمية إلى "+primaryName(x);$("nameEn").value=x.nameEn||x.name||"";$("nameAr").value=x.nameAr||"";$("nameEn").disabled=true;$("nameAr").disabled=true;$("unit").value=x.unit;$("unit").disabled=true;$("quantity").value="";$("minStock").value=x.minStock??"";$("minStock").disabled=true;$("price").value=weighted(x).toFixed(2);refreshSupplierOptions(x.supplier||"");$("expiry").value="";$("notes").value="";$("qtyLabel").textContent="الكمية المضافة";showModal()};
 window.historyItem=id=>{let x=data.find(x=>x.id===id);alert("حركة الصنف: "+x.name+"\n"+x.batches.map(b=>`${b.type}: ${b.qty} ${x.unit} | ${b.price} ج.م | ${b.date} | المورد: ${b.supplier||"—"} | الصلاحية: ${b.expiry||"—"}`).join("\n")||"لا توجد حركات مسجلة")};
 document.querySelectorAll("[data-warehouse]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-warehouse]").forEach(z=>z.classList.remove("active"));b.classList.add("active");current=b.dataset.warehouse;$("search").value="";render()});
 document.querySelectorAll("[data-main]").forEach(b=>b.onclick=()=>{
