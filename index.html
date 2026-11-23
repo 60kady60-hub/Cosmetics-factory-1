@@ -153,7 +153,7 @@ body.edge-back-active{overscroll-behavior-x:contain}
    <path d="M151 158c8 15 14 26 14 38" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".42"/>
   </svg>
   <strong class="welcome-wordmark">Ayla Cosmetics</strong>
-  <span class="welcome-version" aria-label="إصدار البرنامج V60">VERSION V64</span>
+  <span class="welcome-version" aria-label="إصدار البرنامج V65">VERSION V65</span>
  </button>
 </section>
 
@@ -353,9 +353,11 @@ function updateExpiryTicker(){
 window.toggleItemDetails=id=>{if(typeof longPressFired!=="undefined"&&longPressFired){longPressFired=false;return;}movementChoiceItemId=String(movementChoiceItemId)===String(id)?null:String(id);movementView=null;expandedItemId=null;render();};
 window.chooseMovementView=(id,view)=>{movementChoiceItemId=String(id);movementView=view;render();};
 function render(){
- const list=items().slice().sort((a,b)=>primaryName(a).localeCompare(primaryName(b),"en",{sensitivity:"base",numeric:true})||String(a.id).localeCompare(String(b.id))), term=$("search").value.trim().toLowerCase();
- const invoiceMatches=term?list.filter(x=>(x.batches||[]).some((b,i)=>String(b.invoiceNumber||(i===0?x.invoiceNumber:"")||"").trim().toLocaleLowerCase()===term)):[];
- const filtered=invoiceMatches.length?invoiceMatches:list.filter(x=>(primaryName(x)+" "+secondaryName(x)+" "+(x.supplier||"")+" "+(x.batches||[]).map(b=>b.supplier||"").join(" ")).toLowerCase().includes(term));
+ const list=items().slice().sort((a,b)=>primaryName(a).localeCompare(primaryName(b),"en",{sensitivity:"base",numeric:true})||String(a.id).localeCompare(String(b.id))), term=$("search").value.trim().toLocaleLowerCase();
+ const normalizeInvoice=v=>String(v??"").replace(/[٠-٩]/g,d=>String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/[۰-۹]/g,d=>String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[\\s\\u200e\\u200f]/g,"").toLocaleLowerCase();
+ const invoiceTerm=normalizeInvoice(term);
+ const invoiceMatches=invoiceTerm?list.filter(x=>(x.batches||[]).some((b,i)=>{const number=normalizeInvoice(b.invoiceNumber||(i===0?x.invoiceNumber:"")||"");return number&&number.includes(invoiceTerm);})||(!(x.batches||[]).length&&normalizeInvoice(x.invoiceNumber||"").includes(invoiceTerm))):[];
+ const filtered=invoiceMatches.length?invoiceMatches:list.filter(x=>(primaryName(x)+" "+secondaryName(x)+" "+(x.supplier||"")+" "+(x.batches||[]).map(b=>b.supplier||"").join(" ")).toLocaleLowerCase().includes(term));
  $("rows").innerHTML=filtered.length?filtered.map(x=>{
   const q=x.batches.reduce((s,b)=>s+Number(b.qty),0);
   const expanded=String(movementChoiceItemId)===String(x.id)&&!!movementView;const choosing=String(movementChoiceItemId)===String(x.id)&&!movementView;
